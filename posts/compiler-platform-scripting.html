@@ -1,0 +1,369 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Introduction to Scripting with the .NET Compiler Platform (Roslyn)</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Introduction to Scripting with the .NET Compiler Platform (Roslyn)" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts\compiler-platform-scripting.cshtml" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin', 'Indie+Flower::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Introduction to Scripting with the .NET Compiler Platform (Roslyn)</div>
+                <div class="lead">So easy a caveman can do it.</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/.net-compiler-platform" class="btn btn-default btn-sm tag-button icon-tag-2"> .NET Compiler Platform</a>
+     <a role="button" href="/tags/roslyn" class="btn btn-default btn-sm tag-button icon-tag-2"> Roslyn</a>
+     <a role="button" href="/tags/scripting" class="btn btn-default btn-sm tag-button icon-tag-2"> scripting</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Wednesday, February 18, 2015</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="compiler-platform-scripting"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/compiler-platform-scripting" data-via="daveaglick" data-text="Introduction to Scripting with the .NET Compiler Platform (Roslyn)" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12">
+<p>Scripting support in the .NET Compiler Platform (formerly known as Roslyn) has been a long time coming. It was originally introduced more than a year ago and then removed while the team considered what the ideal API should look like. It was recently reintroduced into the <a href="https://github.com/dotnet/roslyn/tree/master/src/Scripting">master source branch on GitHub</a>, though as of this blog post it still isn't available on the <a href="https://www.myget.org/gallery/roslyn-nightly">nightly MyGet feed</a> or on <a href="https://www.nuget.org/profiles/RoslynTeam">NuGet</a>. In this post I will explain how to obtain and build the new scripting bits (including on a system without Visual Studio 2015 - it can actually be built using only Visual Studio 2013), introduce some of the scripting functionality, and show some scenarios where this might be helpful in your own applications. I also want to caveat this post by saying that it may go out of date quickly. The .NET Compiler Platform is under heavy development and it is changing frequently, including the public API. While I wouldn't expect any sweeping changes in the scripting support at this point, many of the details are subject to change.</p>
+
+
+<h2>Obtaining and Building</h2>
+
+<p>Since the scripting support isn't available in one of the binary distribution channels like the <a href="https://www.myget.org/gallery/roslyn-nightly">nightly MyGet feed</a> or on <a href="https://www.nuget.org/profiles/RoslynTeam">NuGet</a>, you'll need to obtain and build the .NET Compiler Platform from source in order to use them. Luckily the development team has been working hard to ensure this part is straightforward. The first step is to clone the <a href="https://github.com/dotnet/roslyn">repository from GitHub</a> using the following command (or your favorite Git GUI): 
+<code>git clone https://github.com/dotnet/roslyn.git</code>.</p>
+
+<p>The readme file says that to build the libraries you'll need Visual Studio 2015, but that's not actually true. You can build the .NET Compiler Platform just fine with only Visual Studio 2013 using the special 
+<code>Roslyn2013.sln</code> solution file they've provided. In fact, it's just a simple two-command process. Make sure to run these commands from a Visual Studio command prompt. First you have to restore the NuGet packages and then build the solution. You might get some warnings about missing FxCop, but those are safe to ignore. From the 
+<code>\src</code> directory in the repository run:</p>
+
+<pre class='prettyprint'>powershell .nuget\NuGetRestore.ps1
+msbuild Roslyn2013.sln</pre>
+
+<p>This will compile a bunch of libraries to the 
+<code>\Binaries\Debug</code> directory. You don't need all of them for scripting. Assuming you want to script in C#, the libraries you need are:</p>
+
+
+<ul class="p">
+ <li>Microsoft.CodeAnalysis</li>
+ <li>Microsoft.CodeAnalysis.CSharp</li>
+ <li>Microsoft.CodeAnalysis.Desktop</li>
+ <li>Microsoft.CodeAnalysis.CSharp.Desktop</li>
+ <li>Microsoft.CodeAnalysis.Scripting</li>
+ <li>Microsoft.CodeAnalysis.Scripting.CSharp</li>
+ <li>System.Collections.Immutable</li>
+ <li>System.Reflection.Metadata</li>
+</ul>
+<p>I also ran into a problem with 
+<code>VBCSCompiler.exe</code> crashing during the build, which appears like it might be related to <a href="https://github.com/dotnet/roslyn/issues/110">this issue</a>. In any case, upgrading to the latest .NET 4.5.2 runtime resolved my problem. Of course, if you have Visual Studio 2015 installed you can also try building the other 
+<code>Roslyn.sln</code> solution.</p>
+
+
+<h2>Your First Script</h2>
+
+<p>Writing a simple script in the .NET Compiler Platform is really easy. For the remainder of this post I will discuss scripting in C#. There is a nearly identical API for scripting in Visual Basic if that's your thing. The 
+<code>CSharpScript</code> class has a bunch of static methods that provide a good entry point to the API. Perhaps the most straightforward of these is 
+<code>CSharpScript.Eval()</code> which will evaluate C# statements and return a result. For example:</p>
+
+<pre class='prettyprint'>var value = CSharpScript.Eval(&quot;1 + 2&quot;);
+Console.Write(value); // 3</pre>
+
+<p>This returns an 
+<code>int</code> with a value of 
+<code>3</code>. See, easy right? If you want more control, there's also 
+<code>CSharpScript.Create()</code> which returns a 
+<code>CSharpScript</code> object suitable for further manipulation before evaluation and 
+<code>CSharpScript.Run()</code> which evaluates the script and returns a 
+<code>ScriptState</code> object with the return value and other state information useful for REPL scenarios.</p>
+
+
+<h2>Getting Variables</h2>
+
+<p>As you saw above, it's easy to get the return value from the script using the 
+<code>CSharpScript.Eval()</code> method. But what about other variables that get created during evaluation? We can get those as well by using the 
+<code>ScriptState</code> object you get back from calling 
+<code>CSharpScript.Run()</code>. It contains a member called 
+<code>Variables</code> (of type 
+<code>ScriptVariables</code>) that enumerates 
+<code>ScriptVariable</code> objects with the name, type, and value for each variable the script created. For example:</p>
+
+<pre class='prettyprint'>ScriptState state = CSharpScript.Run(&quot;int c = 1 + 2;&quot;);
+var value = state.Variables[&quot;c&quot;].Value;
+Console.Write(value); // 3</pre>
+
+
+<h2>References and Namespaces</h2>
+
+<p>If you want to do anything reasonably advanced, you'll probably need to include references and import namespaces for additional assemblies. Thankfully this is also really easy. There are a number of ways to do it, but the easiest is to use a 
+<code>ScriptOptions</code> object which is accepted by any of the three 
+<code>CSharpScript</code> static methods. The default 
+<code>ScriptOptions</code> includes the 
+<code>System</code> assembly and namespace and will search for additional assemblies in the current runtime directory. To modify this, start with 
+<code>ScriptOptions.Default</code> and use it's fluent interface to setup additional references and namespaces (you can also create your own 
+<code>ScriptOptions</code> if you don't want the default 
+<code>System</code> assembly and namespace). Use 
+<code>ScriptOptions.AddReferences()</code> to add references and 
+<code>ScriptOptions.AddNamespaces()</code> to add namespaces (there are also several variations on these methods). 
+<code>ScriptOptions.AddReferences()</code> accepts a variety of different ways of referring to assemblies, including the .NET Compiler Platform type 
+<code>MetadataReference</code> if you're used to using that from the other portions of the platform. Here is an example of including 
+<code>System.IO</code> support in a script:</p>
+
+<pre class='prettyprint'>ScriptOptions options = ScriptOptions.Default
+	.AddReferences(Assembly.GetAssembly(typeof(Path)))
+	.AddNamespaces(&quot;System.IO&quot;);
+var value = CSharpScript.Eval(@&quot;Path.Combine(&quot;&quot;A&quot;&quot;, &quot;&quot;B&quot;&quot;)&quot;, options);
+Console.Write(value); // A\B</pre>
+
+
+<h3>Dynamic Support</h3>
+
+<p>Getting support for 
+<code>dynamic</code> in your script can be a challenge if only because it's not obvious which assemblies need to be referenced to support it. The answer is that you need 
+<code>System.Core</code> and 
+<code>Microsoft.CSharp</code>. That's all that's strictly needed, but if you also want support for 
+<code>ExpandoObject</code> you'll need an extra reference and namespace support for 
+<code>System.Dynamic</code>. Here is an example script with 
+<code>dynamic</code> support (note that there's no magic to the types I pass to 
+<code>Assembly.GetAssembly()</code>; these just happen to be types I know are defined in the required assemblies). Note also that I had to use 
+<code>CSharpScript.Run()</code> since you can't directly return values from a script so I had to store my value in a variable and get it from the 
+<code>ScriptState</code> object as we saw earlier.</p>
+
+<pre class='prettyprint'>ScriptOptions options = ScriptOptions.Default
+	.AddReferences(
+		Assembly.GetAssembly(typeof(System.Dynamic.DynamicObject)),  // System.Code
+		Assembly.GetAssembly(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo)),  // Microsoft.CSharp
+		Assembly.GetAssembly(typeof(System.Dynamic.ExpandoObject)))  // System.Dynamic
+	.AddNamespaces(&quot;System.Dynamic&quot;);
+ScriptState state = CSharpScript.Run(@&quot;
+	dynamic dyn = new ExpandoObject();
+	dyn.Five = 5;
+	var value = dyn.Five;&quot;, options);
+Console.Write(state.Variables[&quot;value&quot;].Value); // 5</pre>
+
+
+<h2>Setting Globals</h2>
+
+<p>We've seen a number of ways of getting data out of the script, but what about getting data into the script? This is one of my favorite features of the scripting API because it's so easy to use. To set the data available to the script, you just have to pass an arbitrary object to one of the three 
+<code>CSharpScript</code> static methods. The members of this object will then be available to your script as globals. For example:</p>
+
+<pre class='prettyprint'>// Defined elsewhere
+public class Globals
+{
+	public int X;
+	public int Y;
+}
+
+var value = CSharpScript.Eval(&quot;X + Y&quot;, new Globals { X = 1, Y = 2 });
+Console.Write(value); // 3</pre>
+
+<p>Note that the scripting engine respects protection levels so it's not possible to directly pass an anonymous object to the script because anonymous objects are usually scoped to the method in which they appear.</p>
+
+
+<h2>Creating a Delegate</h2>
+
+<p>Finally you may want to compile the script, but store it for later reuse. Thankfully, there is also an easy way to create a delegate from any method in your script by calling 
+<code>ScriptState.CreateDelegate()</code>.</p>
+
+<pre class='prettyprint'>ScriptState state = CSharpScript.Run(&quot;int Times(int x) { return x * x; }&quot;);
+var fn = state.CreateDelegate&lt;Func&lt;int, int&gt;&gt;(&quot;Times&quot;);
+var value = fn(5);
+Console.Write(value);  // 25</pre>
+
+
+<h2>Conclusions</h2>
+
+<p>By now you've hopefully thought of some use cases for the new scripting capability. My personal favorite at the moment is using this to drive configuration files. Instead of configuring your application using XML or JSON, why not set up a scripting environment and let your users (or you) write code to configure the application. If this interests you, I should also mention <a href="https://github.com/config-r/config-r">ConfigR</a> which does exactly this while abstracting away many of the details. Any post on C# scripting would also be incomplete without a mention of <a href="https://github.com/scriptcs/scriptcs">scriptcs</a> which provides a REPL for you to use on the command line for executing your own script files.</p>
+
+<p>There's also a lot more to the .NET Compiler Platform scripting support than what I've discussed here. It's even possible to compile your script to a syntax tree and then use the rest of the .NET Compiler Platform capabilities to explore, analyze, and manipulate the script. A good place to continue exploring is the <a href="http://source.roslyn.io/">enhanced Roslyn source view site</a>.</p></div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'compiler-platform-scripting';
+            var disqus_title = 'Introduction to Scripting with the .NET Compiler Platform (Roslyn)';
+            var disqus_url = 'http://www.daveaglick.com/posts/compiler-platform-scripting';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+

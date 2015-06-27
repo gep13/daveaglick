@@ -1,0 +1,269 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Brace Style Convention</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Brace Style Convention" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts\brace-style-convention.cshtml" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin', 'Indie+Flower::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Brace Style Convention</div>
+                <div class="lead">Or Why I Prefer My Braces On Their Own Line</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/conventions" class="btn btn-default btn-sm tag-button icon-tag-2"> conventions</a>
+     <a role="button" href="/tags/programming" class="btn btn-default btn-sm tag-button icon-tag-2"> programming</a>
+     <a role="button" href="/tags/style" class="btn btn-default btn-sm tag-button icon-tag-2"> style</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Wednesday, May 21, 2014</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="brace-style-convention"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/brace-style-convention" data-via="daveaglick" data-text="Brace Style Convention" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12">
+<p>Most C language descendants and variants use braces to indicate scope, and where there is a possibility for variation there will be as many opinions as programmers as to the “correct” way to do things. There has certainly been more than enough written about where to put an opening brace, but I was having a discussion on this topic recently and just couldn’t resist adding my opinion to the noise.</p>
+
+<p>First, let’s review the various conventions. <a href="http://en.wikipedia.org/wiki/Indent_style">There are a bunch</a>, but they generally boil down into the following three categories:</p>
+
+<h1>Same Line</h1>
+
+<p>This style puts the opening brace for a class, method, etc. on the same line as the statement that starts the new scope. The closing brace goes on it’s own line at the same indent level as the opening statement.</p>
+
+<pre class="prettyprint">class MyClass {
+    int var = 0;
+
+    public MyMethod(int arg) {
+        arg = arg + 2;
+        if(arg == 4) {
+            DoSomething(arg);
+        }
+        DoSomethingElse(arg);
+    }
+}</pre>
+
+<h1>New Line</h1>
+
+<p>In this style, the opening brace always goes on it’s own line at the same indent level as the statement that starts the new scope.</p>
+
+<pre class="prettyprint">class MyClass
+{
+    int var = 0;
+
+    public MyMethod(int arg)
+    {
+        arg = arg + 2;
+        if(arg == 4)
+        {
+            DoSomething(arg);
+        }
+        DoSomethingElse(arg);
+    }
+}</pre>
+
+<h1>Hybrid</h1>
+
+<p>Many conventions mix the two styles above based on circumstance. For example, braces that open a class or method go on a new line while interior braces such as for loops or conditionals go on the same line.</p>
+
+<h1>My Preference</h1>
+
+<p>With that out of the way, which style do I prefer? I lean very heavily towards always putting the braces on their own line, regardless of situation. I have a couple of reasons for this. One, I don’t find modern monitors or development environments to be cramped or hurting for space. The loss of a line every now and then to a brace doesn’t really impact my ability to gain a big-picture view of the code I’m looking at. I also tend to dismiss the hybrid approaches because I don’t want to have to remember which situation is which when I’m writing code. The meaning of a brace (to indicate scope) is generally universal and so I think it’s usage should be too.</p>
+
+<p>I do see real readability benefits to putting the brace on it’s own line. For starters, I find the brace symmetry to be easier on my eyes and easier to skim. When I’m quickly scanning a file with 2,000 lines of code and I need to get a handle on the structure, that symmetry really helps me form a mental image of how things line up. Perhaps more importantly though is the white space the opening brace leaves. By creating an essentially blank line both before and after the code within a given scope, the body is set apart and becomes it’s own unit. I know some folks say that indenting/spacing serves the same purpose, but I just don’t get a quick an impression without that near emptiness in the code file.</p>
+
+<p>So is my way the right way? It’s worth noting that there is no right or wrong answer to where your braces should go. While the question seems to elicit the same responses from programmers as if you were questioning their mother’s monogamy, the really important thing to remember is to always be consistent. I can’t stress this enough. If you’re on a team and you like one style but the team as adopted a different one, guess what? You’re going to have to change your ways. Consistency in code is one of the best ways to ensure everyone working on a large code base can reach optimal understanding in a minimum amount of time.</p></div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'brace-style-convention';
+            var disqus_title = 'Brace Style Convention';
+            var disqus_url = 'http://www.daveaglick.com/posts/brace-style-convention';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+

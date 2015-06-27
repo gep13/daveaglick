@@ -1,0 +1,924 @@
+
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/compiler-platform-in-t4</guid><link>http://daveaglick.com/posts/compiler-platform-in-t4</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Using the .NET Compiler Platform in T4 Templates - Metaprogramming with Roslyn.</title><description>
+&lt;p&gt;&lt;a href="https://msdn.microsoft.com/en-us/library/bb126445.aspx"&gt;T4 templates&lt;/a&gt; provide a powerful way to generate code at design time (and sometimes at compile time if you set up Visual Studio appropriately). The traditional way of accessing the code of your solution from within a T4 template is to &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/gg604090(v=vs.100).aspx"&gt;get the Visual Studio API&lt;/a&gt; (called &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/envdte.dte(v=vs.100).aspx"&gt;DTE&lt;/a&gt;). This has always seemed like a bit of a kludge to me and feels a little too far removed from the code and what it represents. We now have another option by using the .NET Compiler Platform from within a T4 template to parse, query, and output content based on the files in our solution.&lt;/p&gt;
+
+&lt;p&gt;In my particular case I wanted to scan all the source files in the same folder as the template, look for classes that derive from a specific base class (
+&lt;code&gt;Module&lt;/code&gt;), iterate over all their public constructors, and then output extension methods for the 
+&lt;code&gt;IPipeline&lt;/code&gt; interface for each constructor that instantiates the class using that constructor and adds it to the pipeline. Here's what the template looks like:&lt;/p&gt;
+
+
+&lt;pre class="prettyprint"&gt;&amp;lt;#@ template debug="false" hostspecific="true" language="C#" #&amp;gt;
+&amp;lt;#@ assembly name="System.Core" #&amp;gt;
+&amp;lt;#@ assembly name="System.IO" #&amp;gt;
+&amp;lt;#@ assembly name="System.Runtime" #&amp;gt;
+&amp;lt;#@ assembly name="System.Text.Encoding" #&amp;gt;
+&amp;lt;#@ assembly name="System.Threading.Tasks" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)Microsoft.CodeAnalysis.dll" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)Microsoft.CodeAnalysis.CSharp.dll" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)System.Collections.Immutable.dll" #&amp;gt;
+&amp;lt;#@ import namespace="System.Linq" #&amp;gt;
+&amp;lt;#@ import namespace="System.Text" #&amp;gt;
+&amp;lt;#@ import namespace="System.Collections.Generic" #&amp;gt;
+&amp;lt;#@ import namespace="System.IO" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis.CSharp" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis.CSharp.Syntax" #&amp;gt;
+&amp;lt;#@ output extension=".cs" #&amp;gt;
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+&amp;lt;# Process(); #&amp;gt;
+&amp;lt;#+
+	public void Process()
+	{
+		// Get a SyntaxTree for every file
+		foreach(CSharpSyntaxTree syntaxTree in Directory.EnumerateFiles(Path.GetDirectoryName(Host.TemplateFile))
+			.Where(x =&amp;gt; Path.GetExtension(x) == ".cs")
+			.Select(x =&amp;gt; CSharpSyntaxTree.ParseText(File.ReadAllText(x)))
+			.Cast&amp;lt;CSharpSyntaxTree&amp;gt;())
+		{
+			// Get all class declarations in each file that derive from Module
+			foreach(ClassDeclarationSyntax classDeclaration in syntaxTree.GetRoot()
+				.DescendantNodes()
+				.OfType&amp;lt;ClassDeclarationSyntax&amp;gt;()
+				.Where(x =&amp;gt; x.BaseList != null &amp;amp;&amp;amp; x.BaseList.Types
+					.Any(y =&amp;gt; y.Type is Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax 
+						&amp;amp;&amp;amp; ((Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax)y.Type).Identifier.Text == "Module")))
+			{
+				// Output the same namespace as the class
+				SyntaxNode namespaceNode = classDeclaration.Parent;
+				while(namespaceNode != null &amp;amp;&amp;amp; !(namespaceNode is NamespaceDeclarationSyntax))
+				{
+					namespaceNode = namespaceNode.Parent;
+				}
+				if(namespaceNode != null)
+				{
+					WriteLine("namespace " + ((NamespaceDeclarationSyntax)namespaceNode).Name.ToString() + Environment.NewLine + "{");
+				}
+			
+				// Output the extensions class
+				WriteLine("    public static class " + classDeclaration.Identifier.Text + "PipelineExtensions" + Environment.NewLine + "    {");
+			
+				// Get all non-static public constructors
+				foreach(ConstructorDeclarationSyntax constructor in classDeclaration.Members
+					.OfType&amp;lt;ConstructorDeclarationSyntax&amp;gt;()
+					.Where(x =&amp;gt; x.Modifiers.Count == 1 &amp;amp;&amp;amp; x.Modifiers[0].Text == "public"))
+				{
+					// Output the static constructor method
+					WriteLine("        public static IPipeline " + classDeclaration.Identifier.Text + constructor.ParameterList.ToString().Insert(1, "this IPipeline pipeline, ") + Environment.NewLine + "        {");
+				
+					// Create and add the module
+					WriteLine("            return pipeline.AddModule(new " + classDeclaration.Identifier.Text + "(" + string.Join(", ", constructor.ParameterList.Parameters.Select(x =&amp;gt; x.Identifier.Text)) + "));");
+				
+					// Close method
+					WriteLine("        }");
+				}
+			
+				// Close extensions class
+				WriteLine("    }");			
+			
+				// Close namespace
+				if(namespaceNode != null)
+				{
+					WriteLine("}");
+				}
+			}
+		}
+	}
+#&amp;gt;&lt;/pre&gt;
+
+&lt;p&gt;And this is some example output:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace Wyam.Core.Modules
+{
+    public static class AppendPipelineExtensions
+    {
+        public static IPipeline Append(this IPipeline pipeline, string content)
+        {
+            return pipeline.AddModule(new Append(content));
+        }
+    }
+}&lt;/pre&gt;
+
+&lt;p&gt;A couple things to note:&lt;/p&gt;
+
+
+&lt;ul class="p"&gt;
+ &lt;li&gt;You must use the Roslyn assemblies from NuGet. If you try to build them yourself, they won't work out of the box in a T4 template because of the way Roslyn assemblies are delay signed.&lt;/li&gt;
+ &lt;li&gt;In this case I didn't even need to compile or get a semantic model, the syntax tree was enough for me. If you need to go further (such as using symbol information) you can always bring in the Roslyn compilation APIs.&lt;/li&gt;
+ &lt;li&gt;I prefer to write my T4 templates entirely in C# and output content using &lt;code&gt;WriteLine()&lt;/code&gt;. You can obviously use a different approach such as interspersing control logic with template content.&lt;/li&gt;
+&lt;/ul&gt;</description><pubDate>Thu, 23 Apr 2015 00:00:00 Z</pubDate><a10:updated>2015-04-23T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/identity-crisis</guid><link>http://daveaglick.com/posts/identity-crisis</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Identity Crisis - Changing your name in the digital age.</title><description>
+&lt;p&gt;Inspired by notable tech personalities like &lt;a href="http://www.hanselman.com/"&gt;Scott Hanselman&lt;/a&gt; and &lt;a href="http://simpleprogrammer.com/"&gt;John Sonmez&lt;/a&gt; who place a lot of emphasis on "personal brand", I've recently been thinking about my own personal brand. Because the username I used was common enough that I wasn't always the first to claim it, I ended up with a lot of slightly different usernames across different platforms. I was 
+&lt;code&gt;somedave&lt;/code&gt; on GitHub and Stack Overflow, 
+&lt;code&gt;@somedaveg&lt;/code&gt; on Twitter, 
+&lt;code&gt;somedavedg&lt;/code&gt; on Reddit, etc. and my website was 
+&lt;code&gt;somedave.com&lt;/code&gt;. I'm not nearly notable enough for this to make much of a difference (fun experiment, try Googling just "Scott"), but it bothered me none the less. When someone puts my username in a GitHub issue, I want that to also point to my Twitter handle, etc. Not to mention, my various usernames didn't really identify &lt;em&gt;me&lt;/em&gt;. There was no real indication of who was behind them other than someone named Dave. And maybe one day, it actually will make a difference. So I set out to set things right.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;I am now known everywhere as 
+&lt;code&gt;daveaglick&lt;/code&gt; and my site is at 
+&lt;code&gt;daveaglick.com&lt;/code&gt;.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Granted, it's a little long. I obviously would have preferred something more concise like 
+&lt;code&gt;dglick&lt;/code&gt; or 
+&lt;code&gt;daveglick&lt;/code&gt;, but I'm a little late to the Twitter handle party at this point and I really wanted to find a username that was available everywhere. I had been thinking about this for a while; it wasn't a spur of the moment decision. I had planned which services I needed to change, made sure the name was available everywhere, and then changed it in a deliberate sequence. In case you're thinking about doing the same thing, here's the steps I took.&lt;/p&gt;
+
+
+&lt;h3&gt;Find a Name&lt;/h3&gt;
+
+&lt;p&gt;First I went to &lt;a href="http://checkusernames.com/"&gt;http://checkusernames.com/&lt;/a&gt; to verify the name was available on a wide range of services. There are other sites like this, but they all do essentially the same thing by checking for username availability across a wide spectrum of social and other sites. I also cross-checked with a domain registrar (I use Namecheap) to make sure I could also get the 
+&lt;code&gt;.com&lt;/code&gt; and 
+&lt;code&gt;.net&lt;/code&gt; of the same name. I focused on names that were both consist across sites and domains and that included my own name clearly.&lt;/p&gt;
+
+
+&lt;h3&gt;Set Up Email&lt;/h3&gt;
+
+&lt;p&gt;Once I had found a name that I was sure would be available, I proceeded to register the domains and set up a new email address. I figured this was important to do first because as I change profiles at the various sites I'll need to input my new email address. I use Exchange Online, and thankfully it supports multiple domains and multiple email addresses per user so getting this set up to support both my old address and my new one was pretty easy. I wanted to go all the way, so I even changed my primary account name with Office 365 and deleted my email profiles from a my desktop and mobile devices and then added them back with my new account name.&lt;/p&gt;
+
+
+&lt;h3&gt;Migrate My Website&lt;/h3&gt;
+
+&lt;p&gt;I felt it was important to also get my new website up and running before pointing my social profiles in that direction. The hardest part of this process was recoding the site. Since my site is all custom code, I had to scrub it for any uses of my old name and replace it with my new one where appropriate. This wasn't too bad, and using a simple file content search helped a lot. I also renamed the Visual Studio solution and project files, changed the default namespace, etc. so that the code reflected the new home. I do use Disqus, so I had to change that as well. While I could change my Disqus username without a problem, and they even provide some handly domain migration tools, you can't change the shortname (their version of a site id) for an existing site. That part had to stay as-is in the code, but since it's in JavaScript, no one will see it and it should be invisible. Then I created a new site in Azure, directed my new domain to it, and republished the site. No surprises.&lt;/p&gt;
+
+&lt;p&gt;The second part of publishing the new site was setting up redirects for all the old ones. Namecheap makes it easy to do this, but you have to remember to add a trailing slash to the redirect destination otherwise the full path won't come along for the ride. I also had a redirect set up with Wordpress for my old blog, so I changed that too for good measure. It still would have worked if I hadn't by redirecting from Wordpress to my old domain and then to my new domain, but one redirect is better than two. I used 301 redirects so that search engines pick up on the change and should adjust accordingly.&lt;/p&gt;
+
+
+&lt;h3&gt;GitHub&lt;/h3&gt;
+
+&lt;p&gt;My next migration was GitHub. This one had me the most nervous because I'm starting to get some traction for some of my projects and I was worried about the implications. However, GitHub has a very nice policy of redirecting repos and other content when you change your username. This isn't permanent, and they warn that it'll stop if someone registers your old name and then created repositories with similar names, but it's as good as could be expected. Changing my GitHub username was easy, but updating all of the repositories on my local system to point to the new address and use my new email address was time consuming. You don't have to strictly do this step (because of the redirects), but I felt like it was better to do it now and get it over with then have potential confusion later.&lt;/p&gt;
+
+
+&lt;h3&gt;Twitter&lt;/h3&gt;
+
+&lt;p&gt;Next up was Twitter. Changing a username on Twitter is also really easy, and your followers and other profile information stay intact, but it doesn't "redirect" older mentions to your new handle. Since Twitter now indexes everything and provides longer-term search, who knows when an old Tweet might come up that references your old handle? My solution to this was to register my old Twitter handle as a new account soon as I changed my existing profile to the new handle. Then I could add some information to the profile for the old handle pointing people to my new one. Again, probably not necessary given my relative obscurity, but hey - why not?&lt;/p&gt;
+
+
+&lt;h3&gt;Other Sites&lt;/h3&gt;
+
+&lt;p&gt;Then there were a bunch of other sites: Goodreads, Stack Overflow, Gravatar, LinkedIn, Facebook, etc. I was pleasantly surprised to find that most sites provide capabilities for changing your identifier without much hassle. I did have trouble with a few though. Codeplex just doesn't let you change it, in fact their profile options are basically non-existent. Reddit doesn't let you change your username either, and their recommendation is to create a new account and loose all your karma, etc. Thankfully I'm not a big Reddit user, so this wasn't a big deal. Also, NuGet doesn't have a facility to do this, but &lt;a href="https://github.com/NuGet/NuGetGallery/issues/319"&gt;there's a GitHub issue suggesting you can contact them&lt;/a&gt;. My request for a change is pending.&lt;/p&gt;
+
+
+&lt;h3&gt;Not Quite Done&lt;/h3&gt;
+
+&lt;p&gt;It took me the better part of an afternoon, but at this point I'm almost there. I still need to search the web, Stack Overflow, and other forums I participate in to locate links that point to my old GitHub profile or web site and edit them to point to the correct place. I'm also sure I'll think of some other clean up to do as well, but for the most part this wasn't too complex. It just took some planning and time.&lt;/p&gt;</description><pubDate>Thu, 19 Mar 2015 00:00:00 Z</pubDate><a10:updated>2015-03-19T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/announcing-linqpad-codeanalysis</guid><link>http://daveaglick.com/posts/announcing-linqpad-codeanalysis</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Announcing LINQPad.CodeAnalysis - .NET Compiler Platform helpers and utilities for LINQPad.</title><description>
+&lt;p&gt;LINQPad.CodeAnalysis is a library that contains a set of .NET Compiler Platform helpers and utilities for LINQPad. Because it is so low ceremony but also has advanced functionality like debugging, data source connections, and advanced output and visualization, LINQPad provides an ideal platform for quickly experimenting, exploring, and working with the .NET Compiler Platform.&lt;/p&gt;
+
+&lt;p&gt;The first feature (of what I plan to be many) is a syntax tree visualizer similar to the one available for Visual Studio 2015. It allows you to dump a syntax tree for your current query, other queries, or generated directly via the .NET Compiler Platform.&lt;/p&gt;
+
+
+&lt;img src="/Content/posts/syntax-tree.png" class="img-responsive"&gt;
+
+&lt;p&gt;More information including installation and usage instructions is available at &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;https://github.com/daveaglick/LINQPad.CodeAnalysis&lt;/a&gt;&lt;/p&gt;</description><pubDate>Wed, 18 Mar 2015 00:00:00 Z</pubDate><a10:updated>2015-03-18T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/compiler-platform-scripting</guid><link>http://daveaglick.com/posts/compiler-platform-scripting</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Introduction to Scripting with the .NET Compiler Platform (Roslyn) - So easy a caveman can do it.</title><description>
+&lt;p&gt;Scripting support in the .NET Compiler Platform (formerly known as Roslyn) has been a long time coming. It was originally introduced more than a year ago and then removed while the team considered what the ideal API should look like. It was recently reintroduced into the &lt;a href="https://github.com/dotnet/roslyn/tree/master/src/Scripting"&gt;master source branch on GitHub&lt;/a&gt;, though as of this blog post it still isn't available on the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;. In this post I will explain how to obtain and build the new scripting bits (including on a system without Visual Studio 2015 - it can actually be built using only Visual Studio 2013), introduce some of the scripting functionality, and show some scenarios where this might be helpful in your own applications. I also want to caveat this post by saying that it may go out of date quickly. The .NET Compiler Platform is under heavy development and it is changing frequently, including the public API. While I wouldn't expect any sweeping changes in the scripting support at this point, many of the details are subject to change.&lt;/p&gt;
+
+
+&lt;h2&gt;Obtaining and Building&lt;/h2&gt;
+
+&lt;p&gt;Since the scripting support isn't available in one of the binary distribution channels like the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;, you'll need to obtain and build the .NET Compiler Platform from source in order to use them. Luckily the development team has been working hard to ensure this part is straightforward. The first step is to clone the &lt;a href="https://github.com/dotnet/roslyn"&gt;repository from GitHub&lt;/a&gt; using the following command (or your favorite Git GUI): 
+&lt;code&gt;git clone https://github.com/dotnet/roslyn.git&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The readme file says that to build the libraries you'll need Visual Studio 2015, but that's not actually true. You can build the .NET Compiler Platform just fine with only Visual Studio 2013 using the special 
+&lt;code&gt;Roslyn2013.sln&lt;/code&gt; solution file they've provided. In fact, it's just a simple two-command process. Make sure to run these commands from a Visual Studio command prompt. First you have to restore the NuGet packages and then build the solution. You might get some warnings about missing FxCop, but those are safe to ignore. From the 
+&lt;code&gt;\src&lt;/code&gt; directory in the repository run:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;powershell .nuget\NuGetRestore.ps1
+msbuild Roslyn2013.sln&lt;/pre&gt;
+
+&lt;p&gt;This will compile a bunch of libraries to the 
+&lt;code&gt;\Binaries\Debug&lt;/code&gt; directory. You don't need all of them for scripting. Assuming you want to script in C#, the libraries you need are:&lt;/p&gt;
+
+
+&lt;ul class="p"&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.CSharp&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Desktop&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.CSharp.Desktop&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Scripting&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Scripting.CSharp&lt;/li&gt;
+ &lt;li&gt;System.Collections.Immutable&lt;/li&gt;
+ &lt;li&gt;System.Reflection.Metadata&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I also ran into a problem with 
+&lt;code&gt;VBCSCompiler.exe&lt;/code&gt; crashing during the build, which appears like it might be related to &lt;a href="https://github.com/dotnet/roslyn/issues/110"&gt;this issue&lt;/a&gt;. In any case, upgrading to the latest .NET 4.5.2 runtime resolved my problem. Of course, if you have Visual Studio 2015 installed you can also try building the other 
+&lt;code&gt;Roslyn.sln&lt;/code&gt; solution.&lt;/p&gt;
+
+
+&lt;h2&gt;Your First Script&lt;/h2&gt;
+
+&lt;p&gt;Writing a simple script in the .NET Compiler Platform is really easy. For the remainder of this post I will discuss scripting in C#. There is a nearly identical API for scripting in Visual Basic if that's your thing. The 
+&lt;code&gt;CSharpScript&lt;/code&gt; class has a bunch of static methods that provide a good entry point to the API. Perhaps the most straightforward of these is 
+&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; which will evaluate C# statements and return a result. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var value = CSharpScript.Eval("1 + 2");
+Console.Write(value); // 3&lt;/pre&gt;
+
+&lt;p&gt;This returns an 
+&lt;code&gt;int&lt;/code&gt; with a value of 
+&lt;code&gt;3&lt;/code&gt;. See, easy right? If you want more control, there's also 
+&lt;code&gt;CSharpScript.Create()&lt;/code&gt; which returns a 
+&lt;code&gt;CSharpScript&lt;/code&gt; object suitable for further manipulation before evaluation and 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt; which evaluates the script and returns a 
+&lt;code&gt;ScriptState&lt;/code&gt; object with the return value and other state information useful for REPL scenarios.&lt;/p&gt;
+
+
+&lt;h2&gt;Getting Variables&lt;/h2&gt;
+
+&lt;p&gt;As you saw above, it's easy to get the return value from the script using the 
+&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; method. But what about other variables that get created during evaluation? We can get those as well by using the 
+&lt;code&gt;ScriptState&lt;/code&gt; object you get back from calling 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt;. It contains a member called 
+&lt;code&gt;Variables&lt;/code&gt; (of type 
+&lt;code&gt;ScriptVariables&lt;/code&gt;) that enumerates 
+&lt;code&gt;ScriptVariable&lt;/code&gt; objects with the name, type, and value for each variable the script created. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int c = 1 + 2;");
+var value = state.Variables["c"].Value;
+Console.Write(value); // 3&lt;/pre&gt;
+
+
+&lt;h2&gt;References and Namespaces&lt;/h2&gt;
+
+&lt;p&gt;If you want to do anything reasonably advanced, you'll probably need to include references and import namespaces for additional assemblies. Thankfully this is also really easy. There are a number of ways to do it, but the easiest is to use a 
+&lt;code&gt;ScriptOptions&lt;/code&gt; object which is accepted by any of the three 
+&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The default 
+&lt;code&gt;ScriptOptions&lt;/code&gt; includes the 
+&lt;code&gt;System&lt;/code&gt; assembly and namespace and will search for additional assemblies in the current runtime directory. To modify this, start with 
+&lt;code&gt;ScriptOptions.Default&lt;/code&gt; and use it's fluent interface to setup additional references and namespaces (you can also create your own 
+&lt;code&gt;ScriptOptions&lt;/code&gt; if you don't want the default 
+&lt;code&gt;System&lt;/code&gt; assembly and namespace). Use 
+&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; to add references and 
+&lt;code&gt;ScriptOptions.AddNamespaces()&lt;/code&gt; to add namespaces (there are also several variations on these methods). 
+&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; accepts a variety of different ways of referring to assemblies, including the .NET Compiler Platform type 
+&lt;code&gt;MetadataReference&lt;/code&gt; if you're used to using that from the other portions of the platform. Here is an example of including 
+&lt;code&gt;System.IO&lt;/code&gt; support in a script:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
+	.AddReferences(Assembly.GetAssembly(typeof(Path)))
+	.AddNamespaces("System.IO");
+var value = CSharpScript.Eval(@"Path.Combine(""A"", ""B"")", options);
+Console.Write(value); // A\B&lt;/pre&gt;
+
+
+&lt;h3&gt;Dynamic Support&lt;/h3&gt;
+
+&lt;p&gt;Getting support for 
+&lt;code&gt;dynamic&lt;/code&gt; in your script can be a challenge if only because it's not obvious which assemblies need to be referenced to support it. The answer is that you need 
+&lt;code&gt;System.Core&lt;/code&gt; and 
+&lt;code&gt;Microsoft.CSharp&lt;/code&gt;. That's all that's strictly needed, but if you also want support for 
+&lt;code&gt;ExpandoObject&lt;/code&gt; you'll need an extra reference and namespace support for 
+&lt;code&gt;System.Dynamic&lt;/code&gt;. Here is an example script with 
+&lt;code&gt;dynamic&lt;/code&gt; support (note that there's no magic to the types I pass to 
+&lt;code&gt;Assembly.GetAssembly()&lt;/code&gt;; these just happen to be types I know are defined in the required assemblies). Note also that I had to use 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt; since you can't directly return values from a script so I had to store my value in a variable and get it from the 
+&lt;code&gt;ScriptState&lt;/code&gt; object as we saw earlier.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
+	.AddReferences(
+		Assembly.GetAssembly(typeof(System.Dynamic.DynamicObject)),  // System.Code
+		Assembly.GetAssembly(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo)),  // Microsoft.CSharp
+		Assembly.GetAssembly(typeof(System.Dynamic.ExpandoObject)))  // System.Dynamic
+	.AddNamespaces("System.Dynamic");
+ScriptState state = CSharpScript.Run(@"
+	dynamic dyn = new ExpandoObject();
+	dyn.Five = 5;
+	var value = dyn.Five;", options);
+Console.Write(state.Variables["value"].Value); // 5&lt;/pre&gt;
+
+
+&lt;h2&gt;Setting Globals&lt;/h2&gt;
+
+&lt;p&gt;We've seen a number of ways of getting data out of the script, but what about getting data into the script? This is one of my favorite features of the scripting API because it's so easy to use. To set the data available to the script, you just have to pass an arbitrary object to one of the three 
+&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The members of this object will then be available to your script as globals. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;// Defined elsewhere
+public class Globals
+{
+	public int X;
+	public int Y;
+}
+
+var value = CSharpScript.Eval("X + Y", new Globals { X = 1, Y = 2 });
+Console.Write(value); // 3&lt;/pre&gt;
+
+&lt;p&gt;Note that the scripting engine respects protection levels so it's not possible to directly pass an anonymous object to the script because anonymous objects are usually scoped to the method in which they appear.&lt;/p&gt;
+
+
+&lt;h2&gt;Creating a Delegate&lt;/h2&gt;
+
+&lt;p&gt;Finally you may want to compile the script, but store it for later reuse. Thankfully, there is also an easy way to create a delegate from any method in your script by calling 
+&lt;code&gt;ScriptState.CreateDelegate()&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int Times(int x) { return x * x; }");
+var fn = state.CreateDelegate&amp;lt;Func&amp;lt;int, int&amp;gt;&amp;gt;("Times");
+var value = fn(5);
+Console.Write(value);  // 25&lt;/pre&gt;
+
+
+&lt;h2&gt;Conclusions&lt;/h2&gt;
+
+&lt;p&gt;By now you've hopefully thought of some use cases for the new scripting capability. My personal favorite at the moment is using this to drive configuration files. Instead of configuring your application using XML or JSON, why not set up a scripting environment and let your users (or you) write code to configure the application. If this interests you, I should also mention &lt;a href="https://github.com/config-r/config-r"&gt;ConfigR&lt;/a&gt; which does exactly this while abstracting away many of the details. Any post on C# scripting would also be incomplete without a mention of &lt;a href="https://github.com/scriptcs/scriptcs"&gt;scriptcs&lt;/a&gt; which provides a REPL for you to use on the command line for executing your own script files.&lt;/p&gt;
+
+&lt;p&gt;There's also a lot more to the .NET Compiler Platform scripting support than what I've discussed here. It's even possible to compile your script to a syntax tree and then use the rest of the .NET Compiler Platform capabilities to explore, analyze, and manipulate the script. A good place to continue exploring is the &lt;a href="http://source.roslyn.io/"&gt;enhanced Roslyn source view site&lt;/a&gt;.&lt;/p&gt;</description><pubDate>Wed, 18 Feb 2015 00:00:00 Z</pubDate><a10:updated>2015-02-18T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/random-polygon-page-backgrounds</guid><link>http://daveaglick.com/posts/random-polygon-page-backgrounds</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Random Polygon Page Backgrounds - My god, it's full of triangles.</title><description>&lt;p&gt;You may have noticed that this site uses a randomly generated page background. To see it in action, just hit refresh. It creates a unique series of polygons with gradual horizontal shading in a random muted colors. I figured I would take a couple minutes to explain how it's done.&lt;/p&gt;
+
+&lt;p&gt;The magic is from a JavaScript library called &lt;a href="http://qrohlf.com/trianglify/"&gt;Trianglify&lt;/a&gt; (&lt;a href="https://github.com/qrohlf/trianglify"&gt;GitHub&lt;/a&gt;). It can create these sorts of patterns in any size with lots of customizations like polygon size, colors, etc. It then provides the final image as a data URI that can be applied to any CSS element. The GitHub readme actually has an example of setting a background using the library:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var t = new Trianglify();
+    var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+    document.body.setAttribute('style', 'background-image: '+pattern.dataUrl);&lt;/pre&gt;
+
+&lt;p&gt;The challenge for me was getting the background to look nice. I thought the default random palettes were a little too loud, so I set out to generate my own. I still wanted some randomness though, so I looked for libraries that could generate entire color schemes while allowing some control over things like saturation. I found &lt;a href="http://www.checkman.io/please/"&gt;Please.js&lt;/a&gt; (&lt;a href="https://github.com/Fooidge/PleaseJS"&gt;GitHub&lt;/a&gt;) which works perfectly. It returns an array of colors to your specifications including how many, what hue or saturation, and other settings.&lt;/p&gt;
+
+&lt;p&gt;The final trick was getting the background to blend vertically. Since some of the pages on this site are very long, I didn't want to generate backgrounds that took the entire page height. Therefore the backgrounds needed to be tiled. The solution to this was to tell Trianglify to use a horizontal gradient of random colors, but to use a single color for the vertical gradient. This way, with a muted enough color scheme, the line where the tiling takes place isn't very visible (if you look closely you'll be able to spot it).&lt;/p&gt;
+
+&lt;p&gt;My final code looks like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var colors = Please.make_color({
+        golden: false,
+        colors_returned: 3,
+        saturation: .4
+    });
+    var t = new Trianglify({
+        x_gradient: colors,
+        y_gradient: ["#FFFFFF"]
+    });
+    var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+    document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);&lt;/pre&gt;</description><pubDate>Fri, 30 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-30T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/a-tale-of-two-apis</guid><link>http://daveaglick.com/posts/a-tale-of-two-apis</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>A Tale of Two APIs - A strategy for dealing with multiple public interfaces for libraries.</title><description>&lt;p&gt;When developing libraries it occasionally becomes necessary to expose a different public interface to different groups of users. The most common scenario is one in which your library needs to be accessed in one way by applications that use it, but another way by other libraries that extend it. You want extension developers to have access to all the behind-the-scenes details, but exposing those properties and methods to applications would be confusing or even damaging by promoting improper use. In other words, you want the &lt;code&gt;internal&lt;/code&gt; properties and methods to be exposed to one set of developers but not another. In this post I'll examine a strategy for exposing different public APIs to different sets of users.&lt;/p&gt;
+
+&lt;p&gt;One way of accomplishing this is to make the extensions &lt;a href="https://msdn.microsoft.com/en-us/library/0tke9fxk.aspx"&gt;friend assemblies&lt;/a&gt; by using the &lt;code&gt;InternalsVisibleTo&lt;/code&gt; attribute. While tempting, this is a bad idea. Friend assemblies work well for unit testing scenarios and for some enterprise-style development where there is a tight known coupling between components and all the code is well controlled. In any other case, they prevent proper extension by requiring the base library to know about all the extension libraries at compile-time. The web is strewn with disillusioned developers sharing anecdotes of how architectures that rely on &lt;code&gt;InternalsVisibleTo&lt;/code&gt; caused them pain and agony.&lt;/p&gt;
+
+&lt;p&gt;So if we don't want to make our &lt;code&gt;internal&lt;/code&gt; members &lt;code&gt;public&lt;/code&gt; for everyone and we also don't want to expose them to specific libraries with &lt;code&gt;InternalsVisibleTo&lt;/code&gt;, what can we do? The answer is extension methods. One interesting trait of extension methods is that they aren't available unless their namespace is in scope. This allows us to create sets of extension methods that are only visible if certain namespaces have been explicitly imported.&lt;/p&gt;
+
+&lt;p&gt;Consider the following class:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;&lt;code&gt;namespace MyLibrary
+{
+    public class Car
+    {
+        public int NumberOfTires { get; internal set; }
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Assume that the number of tires is set by some sort of car factory class internal to the library and we don't want normal library users to change it. However, let's say we did want extension developers to have access to the tire count so that they could create alternate factory classes. Using this approach, the answer would be to create an extension method that would allow changing the number of tires in a special namespace:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;&lt;code&gt;namespace MyLibrary.Internal
+{
+    public static class CarExtensions
+    {
+        public static void SetNumberOfTires(this Car car, int numberOfTires)
+        {
+            car.NumberOfTires = numberOfTires;
+        }
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Because the &lt;code&gt;SetNumberOfTires()&lt;/code&gt; extension method is still in the &lt;code&gt;MyLibrary&lt;/code&gt; project, it has access to the &lt;code&gt;internal&lt;/code&gt; &lt;code&gt;NumberOfTires&lt;/code&gt; setter. In essence, the extension method is proxying the &lt;code&gt;internal&lt;/code&gt; property and making it &lt;code&gt;public&lt;/code&gt;. All an extension library has to do in order to use it is to add &lt;code&gt;using MyLibrary.Internal;&lt;/code&gt; to any code that needs access.&lt;/p&gt;
+
+&lt;p&gt;There are a couple drawbacks to this approach. The first is that by exposing &lt;code&gt;internal&lt;/code&gt; code through &lt;code&gt;public&lt;/code&gt; extension methods, those bits aren't actually hidden from outside use anymore. While segregating the extensions into a special namespace makes sure they won't pollute the public API, this strategy shouldn't be used if you truly want those properties or methods to remain unavailable to outside code. Another drawback is that the API used to access the &lt;code&gt;internal&lt;/code&gt; code doesn't directly match the &lt;code&gt;internal&lt;/code&gt; code. For example, you'll end up with a lot of &lt;code&gt;.GetXyz()&lt;/code&gt; and &lt;code&gt;.SetXyz()&lt;/code&gt; extensions since you can't create extension properties. Also, you obviously can't expose entire classes this way (though I suppose you could put interfaces or proxy classes in the internal namespace for this purpose). Finally, it requires duplicating portions of your code. For every &lt;code&gt;internal&lt;/code&gt; property or method you want to expose, you also have to write and maintain a matching extension method. However, if you can live with these limitations and feel that a clean API for different sets of consumers is more important than the maintenance burden, this might just do the trick.&lt;/p&gt;</description><pubDate>Thu, 22 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-22T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/debugging-stack-overflows-on-iis</guid><link>http://daveaglick.com/posts/debugging-stack-overflows-on-iis</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Debugging Stack Overflows on IIS - 1990 called and they want their debugger back.</title><description>
+&lt;p&gt;I recently had a problem with an ASP.NET application on IIS where IIS would kill my Application Pool process whenever a specific query was executed. There was no warning and while I could see the process disappear from my logging tool in real-time, I didn't get any error messages or exceptions. Thus began an epic adventure of debugging rules, crash dumps, and WinDbg. It's worth noting that I really have no idea what I'm doing here. Like most modern .NET developers I gave up this sort of thing years ago in favor of the debugging available through Visual Studio and other modern tools. However, it turns out that the only way to get detailed information in cases where IIS kills your process is to do it the hard way. There's probably also multiple hard ways to do it - this is just the one that worked well for me. Hopefully this saves you some time should you ever need to follow me down the rabbit hole.&lt;/p&gt;
+
+
+&lt;h2&gt;Check The Event Logs&lt;/h2&gt;
+
+&lt;p&gt;Before you start the process of getting crash dumps, etc. it might be helpful to check out the Windows Event Log. This should give you some small indication of what's going on, or at least give you something to Google. In my case I didn't have anything in the Application log, but in the System log I found an Information message with a source of Application Popup every time my process got killed:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;Application popup: w3wp.exe - System Error : A new guard page for the stack cannot be created.&lt;/pre&gt;
+
+&lt;p&gt;I also had a Warning from the source WAS:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;A process serving application pool 'MyAppPool' suffered a fatal communication error with the Windows Process Activation Service. The process id was '5288'. The data field contains the error number.&lt;/pre&gt;
+
+&lt;p&gt;These two messages gave me enough for a search and pointed me in the right direction. In this case all signs pointed to a stack overflow, but your specific Event Log messages might indicate something different.&lt;/p&gt;
+
+
+&lt;h2&gt;Enable Debugging Rules&lt;/h2&gt;
+
+&lt;p&gt;The next step is to enable debugging rules to generate crash dumps. You'll need the Debug Diagnostic Tool for this part, which &lt;a href="http://www.microsoft.com/en-us/download/details.aspx?id=42933"&gt;can be obtained here&lt;/a&gt;. Once you've installed it, you'll need to restart IIS with a &lt;code&gt;iisreset&lt;/code&gt; command from the command prompt. Then launch the Debug Diagnostic Tool and walk through the wizard for setting up debugging rules. This essentially creates watchers for various events and then takes various actions (such as dumping logs) when they occur. Specifically you want to create a crash rule:&lt;/p&gt;
+
+
+&lt;img src="/Content/posts/debug-diagnostic-1.png" class="img-responsive"&gt;
+
+&lt;img src="/Content/posts/debug-diagnostic-2.png" class="img-responsive"&gt;
+
+&lt;p&gt;Then when you get to the Advanced Configuration page, click on Exceptions and then Add Exception. This will let you select from a list of exceptions including Stack Overflow. Also make sure to change the Action Type to Full Userdump:&lt;/p&gt;
+
+
+&lt;img src="/Content/posts/debug-diagnostic-3.png" class="img-responsive"&gt;
+
+&lt;p&gt;Finally, select a location for the log files. Make sure it's got plenty of space because the files can get pretty big.&lt;/p&gt;
+
+
+&lt;h2&gt;Open The Dump In WinDbg&lt;/h2&gt;
+
+&lt;p&gt;Now run your application until it crashes. You should get some large &lt;code&gt;.dmp&lt;/code&gt; files in the folder you selected during the wizard. For the next part you'll need to obtain WinDbg. It's important to get the version that matches the build profile of your application, not your system. So if your ASP.NET application is built for x86, you should get the x86 WinDbg tool even if your server is x64. The raw installers can be obtained &lt;a href="http://rxwen-blog-stuff.googlecode.com/files/windbg_6.12.0002.633_x86.zip"&gt;here for x86&lt;/a&gt; and &lt;a href="http://rxwen-blog-stuff.googlecode.com/files/windbg_6.12.0002.633_64_installer.zip"&gt;here for x64&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Once you install WinDbg, open it up and select Open Crash Dump from the File menu. Then you'll need to type the following two commands into the crash dump window:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;.loadby sos clr
+!clrstack&lt;/pre&gt;
+
+&lt;p&gt;If everything goes well, this should print out the full stack when the process crashed (it might take a while). That should get you on your way to debugging what went wrong.&lt;/p&gt;
+
+
+&lt;h2&gt;Additional Resources&lt;/h2&gt;
+
+&lt;p&gt;In the course of trying to figure all of this out I came across some valuable resources:&lt;/p&gt;
+
+&lt;ul class="p"&gt;
+    &lt;li&gt;&lt;a href="http://stackoverflow.com/questions/5053708/how-to-debug-w3wp-exe-process-was-terminated-due-to-a-stack-overflow-works-on"&gt;This Stack Overflow question&lt;/a&gt; got the ball rolling.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://blog.whitesites.com/Debugging-Faulting-Application-w3wp-exe-Crashes__634424707278896484_blog.htm"&gt;This blog post&lt;/a&gt; gives some good information about what to do once you get the crash dump loaded in WinDbg.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://support.microsoft.com/kb/919789?wa=wsignin1.0"&gt;This Microsoft support page&lt;/a&gt; has some step-by-step instructions for configuring Debug Diagnostic Tool in different environments.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://geekswithblogs.net/.NETonMyMind/archive/2006/03/14/72262.aspx"&gt;This blog post&lt;/a&gt; has a good reference on the commands that are available in WinDbg.&lt;/li&gt;
+&lt;/ul&gt;</description><pubDate>Tue, 13 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-13T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/eliminating-magic-strings</guid><link>http://daveaglick.com/posts/eliminating-magic-strings</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Eliminating Magic Strings in ASP.NET MVC - One man's quest to get rid of quotes.</title><description>
+&lt;p&gt;Except for direct screen output, I really dislike coded string literals. Using strings to refer to properties, methods, classes, etc. makes it much easier to introduce code quality problems. This includes things like mistyped identifiers, missed refactoring renames, and poor code analysis capabilities. I am constantly on the hunt for ways to remove these "magic strings" and replace them with strongly-typed counterparts. This post describes several of the tools and techniques I've found that work well. While this post addresses the elimination of magic strings from ASP.NET MVC web applications, many of the strategies are applicable to other code as well.&lt;/p&gt;
+
+
+&lt;h2&gt;What Are Magic Strings?&lt;/h2&gt;
+
+&lt;p&gt;Before discussing how to get rid of them, lets consider what a "magic string" is. A magic string is just a string literal that's used to refer to a code artifact. They often become necessary when a language uses dynamic features that require references to other code. For example, when you want to generate a link in ASP.NET MVC you need to pass in the name of the controller and action:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;@Html.ActionLink("User Profile", "UserProfileAction", "ProfileController")&lt;/pre&gt;
+
+&lt;p&gt;Another area where you see a lot of magic strings in .NET is when you need to refer to code artifacts in attribute arguments. Since attributes are essentially constructed at compile time, they can only use primitive constants as arguments. This results in attribute declarations that look like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;[MyAttribute("SomeClassName", "SomePropertyName")]&lt;/pre&gt;
+
+&lt;p&gt;To some extent a lot of view code is also magic strings. For example, when you refer to a CSS class or the path to a stylesheet or JavaScript file. Heck, even the HTML tag names are magic strings. Generally speaking, a string (or identifier) that is not meant for output and that is not checked at compile-time is a magic string. Notice that I also included identifiers that aren't checked at compile-time. Magic strings don't necessarily have to be strings. The identifiers used in dynamic and anonymous objects in C# are really just syntactic sugar for strings (like the keys in a dictionary) and subject to the same shortcomings.&lt;/p&gt;
+
+&lt;p&gt;So why are these so bad? There are many reasons why you want to try and avoid this type of string literal if you can:&lt;/p&gt;
+
+&lt;ul class="p"&gt;
+    &lt;li&gt;&lt;strong&gt;Mistyping.&lt;/strong&gt; It's very easy to mistype a string literal. Without compile-time checking you'd never know you got it wrong until something doesn't work right at run-time. If you're lucky you'll get an exception. If you're not so lucky (such as a mistyped CSS class name) things just won't look quite right.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Refactoring.&lt;/strong&gt; It's much easier to refactor strongly-typed identifiers. When refactoring magic strings you have to make sure you change every instance. And if you miss one, there's no warning or error until run-time.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Duplicative.&lt;/strong&gt; Magic strings cause you to repeat yourself. Sometimes a lot. If you refer to the same controller and action from multiple views, you may end up using those strings in many places.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Lack of static code analysis.&lt;/strong&gt; We now have so many great tools for performing static code analysis. These tools can quickly identify all the uses of a particular identifier, perform templated refactoring, and generally help us write better code faster. This includes IntelliSense, which uses static code analysis. Magic strings are invisible to static code analyzers. They can't be searched for (other than by plain text), won't show up in IntelliSense, etc.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I will admit that perhaps "magic string" is a bad term for what I'm trying to describe and eventually eliminate. In fact, &lt;a href="http://rob.conery.io/2011/03/10/are-friends-immutable/"&gt;Rob Conery writes a good case against this term and argues it should apply only to conceptual mismatches&lt;/a&gt;. He also takes issue with the underlying premise that this type of string literal is bad. Regardless, the term seems to be accepted within the C# community and I've certainly experienced complications from some of the problems above, so I do find them to be a real issue.&lt;/p&gt;
+
+&lt;p&gt;Now that we've considered what a magic string is and why they're bad, lets investigate some strategies for getting rid of them.&lt;/p&gt;
+
+
+&lt;h2&gt;T4MVC&lt;/h2&gt;
+
+&lt;p&gt;By far the best thing you can do in ASP.NET MVC is to get &lt;a href="https://t4mvc.codeplex.com/"&gt;T4MVC&lt;/a&gt;. This library uses a T4 template to scan your project and generate all sorts of strongly-typed helpers and string constants for your controllers, actions, resources, and more. It even encapsulates all of this in special helper extensions so that you never even have to use strings and instead get a nice IntelliSense experience.&lt;/p&gt;
+
+&lt;p&gt;For example, you can write:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;@Html.ActionLink("User Profile", MVC.Profile.UserProfile())&lt;/pre&gt;
+
+&lt;p&gt;Instead of:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;@Html.ActionLink("User Profile", "UserProfileAction", "ProfileController")&lt;/pre&gt;
+
+&lt;p&gt;There are too many features to list here, so &lt;a href="https://t4mvc.codeplex.com/documentation"&gt;check out the documentation to learn more&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Also, since T4MVC uses a T4 template, the template results need to be rebuilt when your code changes. Visual Studio usually only processes T4 templates when the template itself changes. To get Visual Studio to regenerate the T4MVC helpers on every build you'll want to check out &lt;a href="https://visualstudiogallery.msdn.microsoft.com/8d820b76-9fc4-429f-a95f-e68ed7d3111a"&gt;AutoT4MVC&lt;/a&gt;.&lt;/p&gt;
+
+
+&lt;h2&gt;MetaGen&lt;/h2&gt;
+
+&lt;p&gt;While T4MVC works wonders for all the MVC code in your application, what about the other stuff? &lt;a href="http://danielvaughan.org/post/MetaGen-A-project-metadata-generator-for-Visual-Studio-using-T4.aspx"&gt;MetaGen&lt;/a&gt; is a small T4 template similar to T4MVC that reads all the classes and interfaces in the project and outputs &lt;code&gt;static&lt;/code&gt; metadata classes with &lt;code&gt;const&lt;/code&gt; strings for their members. It's especially helpful when creating bindings in view code to properties of your view models. For example, instead of having to put a magic string into the &lt;code&gt;name&lt;/code&gt; and/or &lt;code&gt;id&lt;/code&gt; attributes of HTML form fields like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;&amp;lt;input id="Username" name="Username" type="text"&amp;gt;&lt;/pre&gt;
+
+&lt;p&gt;You can refer instead to the generated &lt;code&gt;const&lt;/code&gt; string from MetaGen like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;&amp;lt;input id="@LoginMetadata.Username" name="@LoginMetadata.Username" type="text"&amp;gt;&lt;/pre&gt;
+
+&lt;p&gt;As with T4MVC, the MetaGen T4 template won't normally be run on code changes. &lt;a href="https://github.com/bennor/AutoT4"&gt;AutoT4&lt;/a&gt; is another Visual Studio extension that will force processing of any T4 template on project rebuild.&lt;/p&gt;
+
+
+&lt;h2&gt;CSS Classes&lt;/h2&gt;
+
+&lt;p&gt;Referring to your CSS classes can be another area where magic strings can really trip you up. Because it's so tempting to fine-tune stylesheets as you see problems, it's not unusual to accidentally remove or rename a CSS class that's being used from your view code. Thankfully there's a relatively easy way to use T4 to create a &lt;code&gt;static&lt;/code&gt; class with &lt;code&gt;const&lt;/code&gt; strings for all your CSS classes. This not only guards against accidental deletion or renaming, but also provides nice IntelliSense support when writing view code (and yes, Visual Studio can now scan CSS stylesheets and provides IntelliSense anyway so this last point is less important now).&lt;/p&gt;
+
+&lt;p&gt;I don't have a particular library to point you towards for this one, but the T4 template is relatively simple and is included below. It's not perfect and will probably need to be tweaked for your particular stylesheet (this one is designed for the Bootstrap CSS files and is used from &lt;a href="http://www.fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt;), but it should catch most of your CSS classes.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;&amp;lt;#@ template language="C#" hostSpecific="true" #&amp;gt;
+&amp;lt;#@ assembly name="System.Core" #&amp;gt; 
+&amp;lt;#@ import namespace="System.Linq" #&amp;gt;
+&amp;lt;#@ import namespace="System.Globalization" #&amp;gt;
+&amp;lt;#@ import namespace="System.Collections.Generic" #&amp;gt;
+&amp;lt;#@ import namespace="System.Text.RegularExpressions" #&amp;gt;
+&amp;lt;# Process(); #&amp;gt;
+&amp;lt;#+
+	// Regex for CSS classes from http://paul.kinlan.me/regex-to-get-class-names-from-css-2-0/
+	readonly Regex regex = new Regex(@"\.[-]?[_a-zA-Z][_a-zA-Z0-9-]*|[^\0-\177]*\\[0-9a-f]{1,6}(\r\n[ \n\r\t\f])?|\\[^\n\r\f0-9a-f]*", RegexOptions.Compiled);
+
+	// Regexes for removing comments from http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp/3524689#3524689
+	string blockComments = @"/\*(.*?)\*/";
+	string lineComments = @"//(.*?)\r?\n";
+	string strings = @"""((\\[^\n]|[^"\n])*)""";
+	string verbatimStrings = @"@(""[^""]*"")+";
+	TextInfo textInfo = CultureInfo.InvariantCulture.TextInfo;
+
+	public void Process()
+	{
+		WriteLine("namespace FluentBootstrap");
+		WriteLine("{");
+		WriteLine("\tpublic static class Css");
+		WriteLine("\t{");
+
+		// Read the CSS file and strip comments
+		string css = System.IO.File.ReadAllText(Host.ResolvePath(@"Content\bootstrap.css"));
+		css = css.Replace("\r\n", "\n");
+		css = Regex.Replace(css,
+			blockComments + "|" + lineComments + "|" + strings + "|" + verbatimStrings,
+			me =&amp;gt; {
+				if (me.Value.StartsWith("/*") || me.Value.StartsWith("//"))
+					return me.Value.StartsWith("//") ? Environment.NewLine : "";
+				// Keep the literal strings
+				return me.Value;
+			},
+			RegexOptions.Singleline);
+
+		// Get all CSS classes in the file (except for icons)
+		HashSet&amp;lt;string&amp;gt; cssClasses = new HashSet&amp;lt;string&amp;gt;();
+		foreach (Match match in regex.Matches(css))
+		{
+			if(match.Success &amp;amp;&amp;amp; !string.IsNullOrWhiteSpace(match.Groups[0].Value) &amp;amp;&amp;amp; !match.Groups[0].Value.StartsWith(@"\") &amp;amp;&amp;amp; !match.Groups[0].Value.StartsWith(".glyphicon-"))
+			{
+				cssClasses.Add(match.Groups[0].Value.Substring(1));	
+			}
+		}
+		// Separate alpha &amp;amp; numeric portions for ordering http://stackoverflow.com/a/19288352/3042939
+		// Generate the const strings
+		foreach(string cssClass in cssClasses.OrderBy(x =&amp;gt; new string(x.Where(char.IsLetter).ToArray()) + new string(x.Where(char.IsDigit).ToArray()).PadLeft(2, '0') ))
+		{
+			WriteLine("\t\tpublic const string " + String.Join(null, cssClass.Split(new char[]{'-'}, StringSplitOptions.RemoveEmptyEntries)
+				.Select(x =&amp;gt; textInfo.ToTitleCase(x))) + " = \"" + cssClass + "\";");		
+		}
+
+		WriteLine("\t}");
+		WriteLine("}");
+	}
+#&amp;gt;&lt;/pre&gt;
+
+
+&lt;h2&gt;Icons and Icon Fonts&lt;/h2&gt;
+
+&lt;p&gt;Icons are another area where CSS can come in handy, as long as your icons are declared in CSS as well. For a detailed post of how to do this, &lt;a href="/posts/strongly-typed-icon-fonts-in-aspnet-mvc"&gt;see here&lt;/a&gt;.&lt;/p&gt;
+
+
+&lt;h2&gt;HTML Elements&lt;/h2&gt;
+
+&lt;p&gt;You can even eliminate most HTML elements and rely on code to generate them instead. I'm not suggesting this is always a good idea. For example, there's really no reason why you should replace a simple &lt;code&gt;&amp;lt;p&amp;gt;&lt;/code&gt; tag with code, but it can be helpful for more exotic HTML tags or when using a library like &lt;a href="http://getbootstrap.com"&gt;Bootstrap&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;There are several libraries to assist in generating HTML from your view code. For starters, native ASP.NET MVC contains a number of &lt;code&gt;HtmlHelper&lt;/code&gt; extensions to generate form elements. In the third-party space, the &lt;a href="http://mvc.fubu-project.org/"&gt;FubuMVC&lt;/a&gt; project published &lt;a href="https://github.com/DarthFubuMVC/htmltags"&gt;a library to create generic HTML elements via code&lt;/a&gt;. There are also wrappers for common CSS frameworks like &lt;a href="http://getbootstrap.com"&gt;Bootstrap&lt;/a&gt; such as &lt;a href="https://www.twitterbootstrapmvc.com/"&gt;TwitterBootstrapMVC&lt;/a&gt; or my own &lt;a href="http://www.fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt;. There is also planned support for tag-like syntax for code helpers in ASP.NET vNext via &lt;a href="http://www.hanselman.com/blog/ASPNET5VNextWorkInProgressExploringTagHelpers.aspx"&gt;Tag Helpers&lt;/a&gt;.&lt;/p&gt;
+
+
+&lt;h2&gt;DIY&lt;/h2&gt;
+
+&lt;p&gt;There is also a lot you can do in terms of best practice to eliminate magic strings. For example, try not to rely on dynamic objects if possible and use strongly-typed view models instead. &lt;a href="http://lostechies.com/jimmybogard/2009/01/14/a-new-breed-of-magic-strings-in-asp-net-mvc/"&gt;Jimmy Bogard also has some good tips&lt;/a&gt;.&lt;/p&gt;
+
+
+&lt;h2&gt;nameof()&lt;/h2&gt;
+
+&lt;p&gt;Finally, it looks like the compiler and language designers are recognizing some of the problems with certain kinds of magic strings. One of the features I'm most looking forward to in C# 6 is the introduction of &lt;a href="http://www.codeproject.com/Articles/849265/What-s-new-in-Csharp-nameof-Expressions"&gt;a new &lt;code&gt;nameof()&lt;/code&gt; expression&lt;/a&gt;. It will return a string literal for any property and can help eliminate magic strings from error messages, validation checks, UI output, etc.&lt;/p&gt;</description><pubDate>Mon, 05 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-05T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/automatic-retry-for-linq-to-sql</guid><link>http://daveaglick.com/posts/automatic-retry-for-linq-to-sql</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Automatic Retry for LINQ to SQL - A new library that makes retrying transient failures in LINQ to SQL easier.</title><description>
+
+&lt;div class="row"&gt;
+ &lt;div class="col-md-6"&gt;        &lt;strong&gt;&lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;GitHub&lt;/a&gt;&lt;/strong&gt;
+&lt;/div&gt;
+ &lt;div class="col-md-6"&gt;        &lt;strong&gt;&lt;a href="http://www.nuget.org/packages/LinqToSqlRetry/"&gt;NuGet&lt;/a&gt;&lt;/strong&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;hr&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;LinqToSqlRetry&lt;/a&gt; is a simple library to help manage retries in LINQ to SQL. This is particularly important in cloud-based infrastructures like Azure where transient failures are not uncommon. And despite the popularity of Entity Framework, Dapper, and other ORM or data access libraries, there is still a place for simple LINQ to SQL code.&lt;/p&gt;
+
+&lt;p&gt;Retry logic is provided via extension methods, so you will need to bring the &lt;code&gt;LinqToSqlRetry&lt;/code&gt; namespace into scope in every file you need retry logic:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using LinqtoSqlRetry;&lt;/pre&gt;
+ 
+
+&lt;h2&gt;Retry On Submit Changes&lt;/h2&gt;
+
+&lt;p&gt;Instead of using &lt;code&gt;DataContext.SubmitChanges()&lt;/code&gt; just use &lt;code&gt;DataContext.SubmitChangesRetry()&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
+{
+  context.Items.InsertOnSubmit(new Item { Name = "ABC" });
+  context.SubmitChangesRetry();
+}&lt;/pre&gt;
+
+
+&lt;h2&gt;Retry on Queries&lt;/h2&gt;
+
+&lt;p&gt;Add the &lt;code&gt;Retry()&lt;/code&gt; extension method to the end of your queries. It should generally be the last extension you use before materializing the query (which happens when you use extensions like &lt;code&gt;ToList()&lt;/code&gt; or &lt;code&gt;Count()&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
+{
+  int count = context.Items.Where(x =&amp;gt; x.Name == "ABC").Retry().Count();
+}&lt;/pre&gt;
+
+
+
+&lt;h2&gt;Retry Policy&lt;/h2&gt;
+
+&lt;p&gt;The retry logic is controlled by a policy that indicates when a retry should take place and how long to wait before retrying the operation. Two policies are supplied:&lt;/p&gt;
+
+
+&lt;ul&gt;
+ &lt;li&gt;        &lt;code&gt;LinearRetry&lt;/code&gt; retries a specific number of times (3 by default) and waits a specified amount each time (10 seconds by default).
+&lt;/li&gt;
+ &lt;li&gt;        &lt;code&gt;ExponentialRetry&lt;/code&gt; retries a specific number of times (3 by default) and waits an increasing multiple of time (5 seconds by default) after an initial wait on the first retry (10 seconds by default).
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;By default the &lt;code&gt;LinearRetry&lt;/code&gt; policy is used. The policy that you use and it's settings can be changed by passing it in to any of the extension methods:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
+{
+  // Start with a 4 second wait, increasing by a factor of 2, for 5 attempts
+  var retryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(2), 5);
+  context.Items.InsertOnSubmit(new Item { Name = "ABC" });
+  context.SubmitChangesRetry(retryPolicy);
+  int count = context.Items.Where(x =&amp;gt; x.Name == "ABC").Retry(retryPolicy).Count();
+}&lt;/pre&gt;
+
+&lt;p&gt;You can specify your own custom policies to do things like log retry attempts, use more complex logic, retry on different types of errors, etc. by implementing &lt;code&gt;IRetryPolicy&lt;/code&gt;.&lt;/p&gt;
+
+
+&lt;h2&gt;Retry for Arbitrary Operations&lt;/h2&gt;
+
+&lt;p&gt;You can also retry any arbitrary operation with the Retry() extension methods on any IRetryPolicy object. There are two of them, one takes an &lt;code&gt;Action&lt;/code&gt; and the other takes a &lt;code&gt;Func&amp;lt;t&amp;gt;&lt;/code&gt; and returns the result. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var retryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(2), 5);
+retryPolicy.Retry(() =&amp;gt; AMethodThatMightFail());&lt;/pre&gt;
+
+
+&lt;h2&gt;Under the Hood&lt;/h2&gt;
+
+&lt;p&gt;The retry logic under the hood is fairly simple:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;int retryCount = 0;
+while (true)
+{
+    try
+    {
+        return func();
+    }
+    catch (Exception ex)
+    {
+        TimeSpan? interval = retryPolicy.ShouldRetry(retryCount, ex);
+        if (!interval.HasValue)
+        {
+            throw;
+        }
+        Thread.Sleep(interval.Value);
+    }
+    retryCount++;
+}&lt;/pre&gt;
+
+&lt;p&gt;In the code above, the function in the call to &lt;code&gt;func()&lt;/code&gt; and the &lt;code&gt;retryPolicy&lt;/code&gt; object are provided based on usage. This just gives you an idea what's going on during the retry loop. Just look in &lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;the GitHub repository&lt;/a&gt; for more information.&lt;/p&gt;</description><pubDate>Tue, 23 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-23T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/computed-properties-and-entity-framework</guid><link>http://daveaglick.com/posts/computed-properties-and-entity-framework</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Computed Properties and Entity Framework - How to use your computed properties in predicates and projections.</title><description>
+&lt;p&gt;If you're using an ORM, it's not uncommon to have computed properties in addition to the ones that are stored directly in the database. Unfortunatly, these computed properties don't work with Entity Framework out of the box. In this post I'm going to discuss the problem and suggest various ways of mitigating it.&lt;/p&gt;
+    
+&lt;p&gt;For example, consider the following entities that I will use as an example throughout this post.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public class Customer
+{
+  public string FirstName { get; set; }
+  public string LastName { get; set; }
+  public virtual ICollection&amp;lt;Holding&amp;gt; Holdings { get; private set; }
+
+  [NotMapped]
+  public decimal AccountValue
+  {
+    get { return Holdings.Sum(x =&amp;gt; x.Value); }
+  }
+ 
+  [NotMapped]
+  public string FullName
+  {
+    get { return FirstName + " " + LastName; }
+  }
+}
+
+public class Holding
+{
+  public virtual Stock Stock { get; set; }
+  public int Quantity { get; set; }
+
+  [NotMapped]
+  public decimal Value
+  {
+    get { return Quantity * Stock.Price; }
+  }
+}
+
+public class Stock
+{
+  public string Symbol { get; set; }
+  public decimal Price { get; set; }
+}&lt;/pre&gt;
+ 
+&lt;p&gt;As you can see, there are several computed properties including one that aggregates data from a collection and another that uses data from a reference. These properties work fine once you've obtained the entities and want to work with them. The problems start when you want to use them within a query or as part of a projection. For example, the following query will throw an exception:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(c =&amp;gt; c.AccountValue &amp;gt; 10);&lt;/pre&gt;
+
+&lt;p&gt;Likewise, this projection will also fail:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var result = ctx.Customers
+  .Select(c =&amp;gt; new
+  {
+    FullName = c.FullName,
+    AccountValue = c.AccountValue
+  });&lt;/pre&gt;
+      
+&lt;p&gt;In the first case we're trying to use a computed property within a predicate, but Entity Framework doesn't know how to convert &lt;code&gt;AccountValue&lt;/code&gt; to SQL code. In the projection, Entity Framework doesn't know how to convert &lt;code&gt;FullName&lt;/code&gt; to SQL code either. In both cases, it will fail to formulate a SQL query and throw an exception because it just doesn't know what to do with the properties that aren't directly stored in the database. Let's take a look at some of the ways we can get around this problem.&lt;/p&gt;
+
+
+&lt;h1&gt;Don't Use Computed Properties&lt;/h1&gt;
+
+&lt;p&gt;Part of the problem here is that Entity Framework and LINQ to Entities just doesn't know how to look at the actual code for each property. It tries to map the property name to the database and when it doesn't find a match it gives up. However, Entity Framework does actually know how to translate a large number of primitive operations and LINQ methods into SQL code. They just can't be hidden behind properties. The queries above could be rewritten as:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10);&lt;/pre&gt;
+
+&lt;pre class="prettyprint"&gt;var result = ctx.Customers
+  .Select(c =&amp;gt; new
+  {
+    FullName = c.FirstName + " " + c.LastName,
+    AccountValue = c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price)
+  });&lt;/pre&gt;
+
+&lt;p&gt;Notice how the code for each computed property is used directly in the query. Also notice that in the case of &lt;code&gt;AccountValue&lt;/code&gt; we had to not only expand it's code, but also the code of &lt;code&gt;Holding.Value&lt;/code&gt;. There can be no computed properties anywhere in the query code.&lt;/p&gt;
+
+&lt;p&gt;By now, it should be obvious why this doesn't work for anything but the simplest cases. It can become very complex when you have nested computed properties. It's also not DRY because you end up repeating the computation code in every query. And when the underlying logic changes you have to go find every query and change that too.&lt;/p&gt;
+
+
+&lt;h1&gt;Materialize The Entities&lt;/h1&gt;
+
+&lt;p&gt;This is the most common suggestion for getting around this problem. Entity Framework only has an issue if you try and execute the computed properties &lt;em&gt;on the database server&lt;/em&gt;. It works just fine when you run the computations against fully materialized entities. To make this work you just have to materialize the entities (I.e., fetch data from the database server) &lt;em&gt;before&lt;/em&gt; using any computed properties. With this approach the queries would look like:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.ToList().Where(c =&amp;gt; c.AccountValue &amp;gt; 10);&lt;/pre&gt;
+
+&lt;pre class="prettyprint"&gt;var result = ctx.Customers
+  .ToList()
+  .Select(c =&amp;gt; new
+  {
+    FullName = c.FullName,
+    AccountValue = c.AccountValue
+  });&lt;/pre&gt;
+
+&lt;p&gt;See that extra call to &lt;code&gt;.ToList()&lt;/code&gt; in there? That forces Entity Framework to go to the database, execute whatever portion of the query it's seen thus far, and return a &lt;code&gt;List&amp;lt;T&amp;gt;&lt;/code&gt; that can continue to be operated on. By the time the above queries get to the &lt;code&gt;.Where()&lt;/code&gt; and &lt;code&gt;.Select()&lt;/code&gt; calls, we're operating on a &lt;code&gt;List&amp;lt;Customer&amp;gt;&lt;/code&gt; collection instead of on the database.&lt;/p&gt;
+
+&lt;p&gt;Let's think about what this means though. If we're fetching data from the database &lt;em&gt;before&lt;/em&gt; executing the &lt;code&gt;.Where()&lt;/code&gt; condition, then we're pulling down &lt;em&gt;all the rows!&lt;/em&gt; Likewise, by going to the database before the &lt;code&gt;.Select()&lt;/code&gt; projection, we're fetching &lt;em&gt;all the columns&lt;/em&gt; and filtering after we've gotten them. This works okay for small tables and simple data. However, with any meaningful database it falls apart and your performance will quickly suffer.&lt;/p&gt;
+
+
+&lt;h1&gt;Encapsulate&lt;/h1&gt;
+
+&lt;p&gt;This approach gets a little more complicated. In this case we'll put the computed logic inside an extension method that we can use as if it were an actual LINQ operation. It will take the unmaterialized query and apply whatever additional computation we need. It's essentially like the first example of just not using computed properties except it puts the logic somewhere where it can be reused from other queries. Given the following extension method:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public static IQueryable&amp;lt;Customer&amp;gt; WhereAccountValueIsHigh(this IQueryable&amp;lt;Customer&amp;gt; customers)
+{
+  return customers.Where(c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10);
+}
+&lt;/pre&gt;
+
+&lt;p&gt;We can now write:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.WhereAccountValueIsHigh();&lt;/pre&gt;
+
+&lt;p&gt;That extension can be reused wherever we want customers with high account values. Likewise, for the projection we could create the following extension:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public class CustomerData
+{
+  string FullName { get; set; }
+  decimal AccountValue { get; set; }
+}
+
+public static IQueryable&amp;lt;CustomerData&amp;gt; SelectCustomerData(this IQueryable&amp;lt;Customer&amp;gt; customers)
+{
+  return customers.Select(c =&amp;gt; new CustomerData
+  {
+    FullName = c.FirstName + " " + c.LastName,
+    AccountValue = c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price)
+  });
+}
+&lt;/pre&gt;
+
+&lt;p&gt;Notice that I also need an actual projection type for the extension in this case, otherwise it wouldn't know what to use for the generic parameter of the return &lt;code&gt;IQueryable&lt;/code&gt;. This extension can be called like:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.SelectCustomerData();&lt;/pre&gt;
+
+&lt;p&gt;Both extensions let you move the computation somewhere that is at least a little bit reusable. For example, I could now also write the following to chain them together:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.WhereAccountValueIsHigh().SelectCustomerData();&lt;/pre&gt;
+
+&lt;p&gt;We still have a number of problems with this approach. The first is that we still have to duplicate the computation within the property and then again within the extension. This may be fine if you have a computation that you really only need to use in queries (in which case you can remove it as a property), but if not you're still stuck maintaining it in two places. You also still have to expand any nested called to computed properties. For example, if the &lt;code&gt;.WhereAccountValueIsHigh()&lt;/code&gt; extension had used the &lt;code&gt;Holding.Value&lt;/code&gt; property directly, you still would have gotten an exception. This approach does not work around the limitations of the LINQ to Entity query provider not recognizing computed properties, it just puts the actual computations somewhere a little more reusable. Finally, this approach is not very composable. If you had another view that needed an additional property (like the customers initials) you would either need to create an additional extension for the new view or add the initials calculation to &lt;code&gt;.SelectCustomerData()&lt;/code&gt; and then do an additional projection to remove it from the first view that doesn't need it.&lt;/p&gt;
+
+
+&lt;h1&gt;Expression Trees and LINQ to Entities&lt;/h1&gt;
+
+&lt;p&gt;All of the approaches so far have attempted to work around the problem by ensuring that the computed properties never reach LINQ to entities and therefore never get translated to SQL. Before looking at a different type of approach, let's back up a moment and consider how LINQ to entities actually does translate all those LINQ methods and primitive operations to SQL. Under the hood, LINQ to entities reads &lt;a href="http://msdn.microsoft.com/en-us/library/bb397951.aspx"&gt;Expression Trees&lt;/a&gt;, which is a fundamental concept of the entire LINQ system. Essentially, expression trees represent code in a high-level abstraction. LINQ to entities knows how to understand an expression tree and convert most (but not all) of the corresponding commands into SQL statements. In addition, all of the LINQ extensions like &lt;code&gt;.Where()&lt;/code&gt; and &lt;code&gt;.Select()&lt;/code&gt; essentially build up the expression tree that LINQ to entities eventually processes.&lt;/p&gt;
+
+&lt;p&gt;The question then becomes, how can we pass our own expression tree to LINQ to entities? And how can be construct such an expression tree that represents the logic in our computed properties? Thankfully, there are a number of folks who've talked this very question.&lt;/p&gt;
+
+
+&lt;h2&gt;Write Your Own Expressions&lt;/h2&gt;
+
+&lt;p&gt;One approach would be to just write your own `Expression`. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public readonly Expression&amp;lt;Func&amp;lt;Customer, bool&amp;gt;&amp;gt; AccountValueIsHigh = c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10;&lt;/pre&gt;
+
+&lt;p&gt;This can then be used like:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(AccountValueIsHigh);&lt;/pre&gt;
+
+&lt;p&gt;One problem with this approach is that we can't use an &lt;code&gt;Expression&lt;/code&gt; directly in a &lt;code&gt;.Select()&lt;/code&gt; call because the compiler has no idea how to convert the &lt;code&gt;Expression&lt;/code&gt; into something that can be assigned.&lt;/p&gt;
+
+
+&lt;h2&gt;LINQ Expression Projection&lt;/h2&gt;
+
+&lt;p&gt;To address the problem I just mentioned and provide a way to use your own &lt;code&gt;Expression&lt;/code&gt; object directly in &lt;code&gt;.Select()&lt;/code&gt; projection calls, Asher Barak has created a project called &lt;a href="http://linqexprprojection.codeplex.com/"&gt;LINQ Expression Projection&lt;/a&gt;. It was originally explained in &lt;a href="http://www.codeproject.com/Articles/402594/Black-Art-LINQ-expressions-reuse"&gt;this CodeProject article&lt;/a&gt; and allows you to essentially wrap your expression in something that can be used as an assignment. For example, given the following &lt;code&gt;Expression&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public readonly Expression&amp;lt;Func&amp;lt;Customer, decimal&amp;gt;&amp;gt; AccountValueExpression = c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price);&lt;/pre&gt;
+
+&lt;p&gt;You would write:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
+  .AsExpressionProjectable()
+  .Select(c =&amp;gt; new
+  {
+    AccountValue = AccountValueExpression.Project&amp;lt;decimal&amp;gt;()
+  });&lt;/pre&gt;
+
+&lt;p&gt;Notice the extra call to &lt;code&gt;.AsExpressionProjectable()&lt;/code&gt;, which prepares the query for projection and sets up a scan for all instances of the &lt;code&gt;.Project&amp;lt;T&amp;gt;()&lt;/code&gt; extension method. Once found, the library swaps the appropriate &lt;code&gt;Expression&lt;/code&gt; in for the assignment at runtime.&lt;/p&gt;
+
+
+&lt;h2&gt;Linq.Translations&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="http://damieng.com/"&gt;Damien Guard&lt;/a&gt;, &lt;a href="http://davidfowl.com/"&gt;David Fowler&lt;/a&gt;, and Colin Meek has done something similar in a much more generic way. Their &lt;a href="https://github.com/damieng/Linq.Translations"&gt;Linq.Translations library&lt;/a&gt; was first described in &lt;a href="http://damieng.com/blog/2009/06/24/client-side-properties-and-any-remote-linq-provider"&gt;a blog post on Damien's blog&lt;/a&gt;. The idea is that you set up an &lt;code&gt;Expression&lt;/code&gt;-like variable that can be used within the computed property. Then when you write a query, you can just use the computed property without worrying about the &lt;code&gt;Expression&lt;/code&gt; at all. The only extra thing you need is to make a final call to &lt;code&gt;.WithTranslations()&lt;/code&gt; in the LINQ query to convert all the computed properties to their &lt;code&gt;Expression&lt;/code&gt; equivalents. In usage, it would look something like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public class Customer
+{
+  public string FirstName { get; set; }
+  public string LastName { get; set; }
+
+  private static readonly CompiledExpression&amp;lt;Customer, string&amp;gt; fullNameExpression
+     = DefaultTranslationOf&amp;lt;Customer&amp;gt;.Property(e =&amp;gt; e.FullName).Is(e =&amp;gt; e.FirstName + " " + e.LastName);
+
+  [NotMapped]
+  public string FullName
+  {
+    get { return fullNameExpression.Evaluate(this); }
+  }
+}&lt;/pre&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
+  .Select(c =&amp;gt; new
+  {
+    FullName = c.FullName
+  })
+  .WithTranslations();&lt;/pre&gt;
+
+&lt;p&gt;While this is somewhat similar to the &lt;a href="http://linqexprprojection.codeplex.com/"&gt;LINQ Expression Projection&lt;/a&gt; project, it trades complexity during definition for ease of use in queries.&lt;/p&gt;
+
+
+&lt;h2&gt;DelegateDecompiler&lt;/h2&gt;
+
+&lt;p&gt;Hopefully you're still with me because this last project blew my mind. I first learned about &lt;a href="https://github.com/hazzik/DelegateDecompiler"&gt;DelegateDecompiler&lt;/a&gt; from &lt;a href="http://lostechies.com/jimmybogard/2014/05/07/projecting-computed-properties-with-linq-and-automapper/"&gt;this blog post&lt;/a&gt; on &lt;a href="http://lostechies.com/jimmybogard/"&gt;Jimmy Bogard's blog&lt;/a&gt;. While &lt;a href="https://github.com/hazzik/DelegateDecompiler"&gt;DelegateDecompiler&lt;/a&gt; still attempts to pass an &lt;code&gt;Expression&lt;/code&gt; to the query provider, it takes the burden of creating the &lt;code&gt;Expression&lt;/code&gt; out of your hands. It does this by compiling any computed properties into IL then decompiling the IL back into an expression tree. This way it can transparently handle just about any computation you give it including nested computed properties, custom methods, etc. The one caveat is that even though it may seem like it, it's not magic and can't make Entity Framework and LINQ to Entities recognize methods, classes, etc. that they wouldn't have if you had used them directly.&lt;/p&gt;
+
+&lt;p&gt;Using DelegateDecompiler is stupidly simple. You just decorate your computed properties with &lt;code&gt;ComputedAttribute&lt;/code&gt; and then call &lt;code&gt;.Decompile()&lt;/code&gt; in your query. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public class Customer
+{
+  public string FirstName { get; set; }
+  public string LastName { get; set; }
+
+  [NotMapped]
+  [Computed]
+  public string FullName
+  {
+    get { return FirstName + " " + LastName; }
+  }
+}&lt;/pre&gt;
+
+&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
+  .Select(c =&amp;gt; new
+  {
+    FullName = c.FullName
+  })
+  .Decompile();&lt;/pre&gt;
+
+&lt;p&gt;That's all there is to it. There's even a &lt;a href="https://www.nuget.org/packages/DelegateDecompiler.EntityFramework/"&gt;DelegateDecompiler.EntityFramework&lt;/a&gt; library that you can use if you want to support more advanced Entity Framework functionality such as async queries (though it's not necessary for simple Entity Framework usage). In fact, you can make it even easier to use by automatically processing &lt;code&gt;NotMappedAttribute&lt;/code&gt; to indicate computed properties. To do this, just create a new &lt;code&gt;Configuration&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;public class DelegateDecompilerConfiguration : DefaultConfiguration
+{
+    public override bool ShouldDecompile(MemberInfo memberInfo)
+    {
+        // Automatically decompile all NotMapped members
+        return base.ShouldDecompile(memberInfo) || memberInfo.GetCustomAttributes(typeof(NotMappedAttribute), true).Length &amp;gt; 0;
+    }
+}&lt;/pre&gt;
+
+&lt;p&gt;And then register it like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;DelegateDecompiler.Configuration.Configure(new DelegateDecompilerConfiguration());&lt;/pre&gt;
+
+
+&lt;h1&gt;Conclusions&lt;/h1&gt;
+
+&lt;p&gt;As you can see, there are a lot of different ways of working around the lack of support for computed properties in Entity Framework and LINQ to Entities. Which approach you choose depends largely on the factors of your project such as database complexity, query complexity, reuse requirements, etc. Hopefully one of these methods will help you tame all that computation and help release your data from your database.&lt;/p&gt;</description><pubDate>Thu, 11 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-11T00:00:00Z</a10:updated></item></channel></rss>

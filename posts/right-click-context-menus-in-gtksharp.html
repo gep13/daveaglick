@@ -1,0 +1,319 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Right-Click Context Menus In GtkSharp</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Right-Click Context Menus In GtkSharp" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts\right-click-context-menus-in-gtksharp.cshtml" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin', 'Indie+Flower::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Right-Click Context Menus In GtkSharp</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/buttonpressevent" class="btn btn-default btn-sm tag-button icon-tag-2"> ButtonPressEvent</a>
+     <a role="button" href="/tags/context-menu" class="btn btn-default btn-sm tag-button icon-tag-2"> Context Menu</a>
+     <a role="button" href="/tags/contextmenuhelper" class="btn btn-default btn-sm tag-button icon-tag-2"> ContextMenuHelper</a>
+     <a role="button" href="/tags/gtksharp" class="btn btn-default btn-sm tag-button icon-tag-2"> GtkSharp</a>
+     <a role="button" href="/tags/menu" class="btn btn-default btn-sm tag-button icon-tag-2"> Menu</a>
+     <a role="button" href="/tags/mono" class="btn btn-default btn-sm tag-button icon-tag-2"> Mono</a>
+     <a role="button" href="/tags/popup" class="btn btn-default btn-sm tag-button icon-tag-2"> Popup</a>
+     <a role="button" href="/tags/popup-menu" class="btn btn-default btn-sm tag-button icon-tag-2"> Popup Menu</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Monday, April 12, 2010</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="right-click-context-menus-in-gtksharp"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/right-click-context-menus-in-gtksharp" data-via="daveaglick" data-text="Right-Click Context Menus In GtkSharp" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12">
+<p>To show a context menu in GtkSharp (or "popup" as they're called in Gtk land), you would normally add an event handler for Widget.PopupMenu, create or use a Menu instance, and then call Menu.Popup. The only problem is that for many widgets, the right-click doesn't trigger the Widget.PopupMenu event. This is fine for systems where there is no right mouse button or where a right-click isn't the customary way of initiating context menus. However, on systems where there is a user expectation that the way to open a context menu is through a right-click (such as Windows), we need some way to trigger one.</p>
+<p>The situation is complicated a little bit by the existing behavior of Widget.PopupMenu. According to the <a href="http://library.gnome.org/devel/gtk/unstable/gtk-migrating-checklist.html#checklist-popup-menu">Gtk manual</a>, "By default, the key binding mechanism is set to emit this signal when the Shift+F10 or Menu keys are pressed while a widget has the focus." There is a recommendation in the manual that if a developer wants context menus on right-click they should handle the Widget.ButtonPressEvent, listen for the appropriate clicks, and launch the menu using the Menu.Popup method. This is all fine except that now you've got two things to listen to to get proper context menu handling: Widget.PopupMenu and Widget.ButtonPressEvent. It would be nice if there were just one event to handle that got raised anytime a context menu needed to be displayed.</p>
+<p>The following class does just that. You can "attach" it to any Widget and it will listen for the Widget.PopupMenu event to work with the default context menu handling and the Widget.ButtonPressEvent to also work with right-clicks. When either of these occur, it will first propagate the event through to the underlying Widget (in case there are other things that are supposed to be triggered by whatever event caused the context menu) and then raise a ContextMenuHelper.ContextMenu event that you can handle and use to display the context menu regardless of what triggered it. This method should ensure proper event handling and ordering while reducing duplication of code by enabling a single event for context menu handling.</p>
+
+<pre class="prettyprint">using System;
+using Gdk;
+using GLib;
+using Gtk;
+
+namespace DaveAGlick
+{
+ public class ContextMenuEventArgs : EventArgs
+ {
+  private Widget widget;
+  public Widget Widget { get { return widget; } }
+
+  private bool rightClick;
+  public bool RightClick { get { return rightClick; } }
+
+  public ContextMenuEventArgs(Widget widget, bool rightClick)
+  {
+   this.widget = widget;
+   this.rightClick = rightClick;
+  }
+ }
+
+ public class ContextMenuHelper
+ {
+  public event EventHandler&lt;ContextMenuEventArgs&gt; ContextMenu;
+
+  public ContextMenuHelper()
+  {}
+
+  public ContextMenuHelper(Widget widget)
+  {
+   AttachToWidget(widget);
+  }
+
+  public ContextMenuHelper(Widget widget, EventHandler handler)
+  {
+   AttachToWidget(widget);
+   ContextMenu += handler;
+  }
+
+  public void AttachToWidget(Widget widget)
+  {
+   widget.PopupMenu += Widget_PopupMenu;
+   widget.ButtonPressEvent += Widget_ButtonPressEvent;
+  }
+
+  public void DetachFromWidget(Widget widget)
+  {
+   widget.PopupMenu -= Widget_PopupMenu;
+   widget.ButtonPressEvent -= Widget_ButtonPressEvent;
+  }
+
+  [GLib.ConnectBefore]
+  private void Widget_PopupMenu(object o, PopupMenuArgs args)
+  {
+   RaiseContextMenuEvent(args, (Widget)o, false);
+  }
+
+  [GLib.ConnectBefore]
+  private void Widget_ButtonPressEvent(object o, ButtonPressEventArgs args)
+  {
+   if (args.Event.Button == 3 &amp;&amp; args.Event.Type == EventType.ButtonPress)
+   {
+    RaiseContextMenuEvent(args, (Widget)o, true);
+   }
+  }
+
+  private bool propagating = false;   //Prevent reentry
+
+  private void RaiseContextMenuEvent(SignalArgs signalArgs, Widget widget, bool rightClick)
+  {
+   if (!propagating)
+   {
+    //Propagate the event
+    Event evnt = Gtk.Global.CurrentEvent;
+    propagating = true;
+    Gtk.Global.PropagateEvent(widget, evnt);
+    propagating = false;
+    signalArgs.RetVal = true;     //The widget already processed the event in the propagation
+
+    //Raise the context menu event
+    ContextMenuEventArgs args = new ContextMenuEventArgs(widget, rightClick);
+    if (ContextMenu != null)
+    {
+     ContextMenu.Invoke(this, args);
+    }
+   }
+  }
+ }
+}
+</pre>
+</div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'right-click-context-menus-in-gtksharp';
+            var disqus_title = 'Right-Click Context Menus In GtkSharp';
+            var disqus_url = 'http://www.daveaglick.com/posts/right-click-context-menus-in-gtksharp';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+

@@ -1,0 +1,385 @@
+/* Pure CSS sticky footer concept from http://css-tricks.com/snippets/css/sticky-footer/ */
+
+html,
+body {
+  height: 100%;
+}
+#page-wrapper {
+  min-height: 100%;
+  margin-bottom: -130px;
+  /* equal to footer height */
+
+}
+#page-wrapper:after {
+  content: "";
+  display: block;
+}
+#sticky-footer-wrapper,
+#page-wrapper:after {
+  height: 130px;
+  /* must be the same height as footer */
+
+}
+#sticky-footer-wrapper {
+  width: 100%;
+  padding-top: 12px;
+}
+#sticky-footer-wrapper #sticky-footer {
+  background-color: #333333;
+  color: #777777;
+  padding-top: 12px;
+  height: 118px;
+  /* equal to footer height minus padding */
+
+}
+body {
+  border-top: 12px solid #333333;
+  background-color: #555555;
+}
+#body-content {
+  margin-top: 18px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+  background-color: white;
+}
+.logo-col {
+  padding-bottom: 6px;
+  background-color: #333333;
+  font-weight: 900;
+  color: #eeeeee;
+  font-size: 26px;
+  border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+.logo-col a,
+.logo-col a:hover,
+.logo-col a:focus,
+.logo-col a:active {
+  color: #eeeeee;
+}
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a,
+h1 a:hover,
+h2 a:hover,
+h3 a:hover,
+h4 a:hover,
+h5 a:hover,
+h6 a:hover,
+h1 a:focus,
+h2 a:focus,
+h3 a:focus,
+h4 a:focus,
+h5 a:focus,
+h6 a:focus,
+h1 a:active,
+h2 a:active,
+h3 a:active,
+h4 a:active,
+h5 a:active,
+h6 a:active {
+  color: inherit;
+}
+.btn-default .badge {
+  background-color: #cccccc;
+  color: #555555;
+}
+.nav-col,
+.proj-col {
+  padding-top: 6px;
+  display: block;
+  color: #333333;
+}
+.nav-col a,
+.proj-col a,
+.nav-col a:hover,
+.proj-col a:hover,
+.nav-col a:focus,
+.proj-col a:focus,
+.nav-col a:active,
+.proj-col a:active {
+  color: #eeeeee;
+}
+.nav-col strong,
+.proj-col strong {
+  font-weight: 900;
+}
+.nav-col .navbar-toggle,
+.proj-col .navbar-toggle {
+  margin-right: 0;
+}
+.icon-bar {
+  background-color: #eeeeee;
+}
+.topnav {
+  color: #555555;
+  font-weight: bold;
+}
+.banner .hello {
+  font-family: 'Indie Flower', cursive;
+  font-size: 82px;
+  line-height: 1;
+}
+.banner .intro {
+  font-family: "Droid Serif", serif;
+  font-size: 26px;
+}
+.banner .title {
+  font-weight: 900;
+  font-size: 53px;
+  word-wrap: break-word;
+}
+.banner .lead {
+  font-size: 41px;
+  margin-bottom: 0;
+}
+.banner .stats {
+  padding-bottom: 10px;
+}
+.banner .stats .stat-heading {
+  text-align: right;
+}
+.lead {
+  font-family: 'Indie Flower', cursive;
+}
+p,
+.p {
+  font-family: "Droid Serif", serif;
+  line-height: 24px;
+}
+strong {
+  font-weight: 900;
+}
+.right-border {
+  border-right: 1px solid #eeeeee;
+}
+.tag-button {
+  margin-bottom: 6px;
+}
+.tag-button::before {
+  color: #777777;
+}
+.label-date::before {
+  margin-right: 6px;
+  color: #777777;
+}
+.label-comments {
+  color: #777777;
+}
+.label-comments a {
+  color: #777777;
+}
+.label-comments a:hover,
+.label-comments a:focus {
+  color: #777777;
+}
+.label-comments::before {
+  margin-right: 6px;
+  color: #777777;
+}
+td {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+.graph {
+  color: #333333;
+  background-color: whitesmoke;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+}
+@media (max-width: 767px) {
+  #page-wrapper {
+    margin-bottom: -240px;
+  }
+  #body-content {
+    margin-top: 60px;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  #sticky-footer-wrapper,
+  #page-wrapper:after {
+    height: 240px;
+    /* must be the same height as footer */
+  
+  }
+  #sticky-footer-wrapper {
+    padding-top: 0;
+  }
+  #sticky-footer-wrapper #sticky-footer {
+    height: 240px;
+    /* equal to footer height minus padding */
+  
+  }
+  body {
+    border-top: none;
+  }
+  .nav-row {
+    background-color: #333333;
+  }
+  .logo-col {
+    padding-top: 6px;
+    padding-bottom: 0;
+    border-bottom-right-radius: none;
+    border-bottom-left-radius: none;
+  }
+  .nav-col,
+  .proj-col {
+    padding-top: 0;
+    color: #777777;
+  }
+  .nav-col a,
+  .proj-col a,
+  .nav-col a:hover,
+  .proj-col a:hover,
+  .nav-col a:focus,
+  .proj-col a:focus,
+  .nav-col a:active,
+  .proj-col a:active {
+    color: #eeeeee;
+  }
+  .nav-col.collapse,
+  .proj-col.collapse {
+    display: none;
+  }
+  .nav-col.collapse.in,
+  .proj-col.collapse.in {
+    display: block;
+  }
+  .hero-row {
+    padding-top: 6px;
+  }
+  .hero-row .stats .stat-heading {
+    text-align: left;
+  }
+  .right-border {
+    border-right: none;
+  }
+  .banner .title {
+    font-size: 32px;
+  }
+  .banner .hello {
+    font-size: 32px;
+  }
+  .banner .intro {
+    font-size: 19px;
+  }
+  .banner .lead {
+    font-size: 32px;
+  }
+  h1 {
+    font-size: 32px;
+  }
+  h2 {
+    font-size: 26px;
+  }
+  h3 {
+    font-size: 19px;
+  }
+  h4 {
+    font-size: 15px;
+  }
+  h5 {
+    font-size: 13px;
+  }
+}
+/* Code styles */
+
+pre,
+pre.prettyprint {
+  padding: 8px;
+  margin: 0;
+  overflow: auto;
+  word-wrap: normal;
+  word-break: normal;
+  border-color: #dddddd;
+  background-color: #eeeeee;
+  margin-bottom: 20px;
+}
+code {
+  background-color: #eeeeee;
+  color: black;
+}
+.panel .table pre {
+  margin: 0px;
+  border: none;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+/* Awsome same-height Bootstrap columns from http://www.minimit.com/articles/solutions-tutorials/bootstrap-3-responsive-columns-of-same-height */
+
+/* vertical alignment styles */
+
+.col-top {
+  vertical-align: top;
+}
+.col-middle {
+  vertical-align: middle;
+}
+.col-bottom {
+  vertical-align: bottom;
+}
+/* columns of same height styles */
+
+.container-xs-height {
+  display: table;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+.row-xs-height {
+  display: table-row;
+}
+.col-xs-height {
+  display: table-cell;
+  float: none;
+}
+@media (min-width: 768px) {
+  .container-sm-height {
+    display: table;
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+  .row-sm-height {
+    display: table-row;
+  }
+  .col-sm-height {
+    display: table-cell;
+    float: none;
+  }
+}
+@media (min-width: 992px) {
+  .container-md-height {
+    display: table;
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+  .row-md-height {
+    display: table-row;
+  }
+  .col-md-height {
+    display: table-cell;
+    float: none;
+  }
+}
+@media (min-width: 1200px) {
+  .container-lg-height {
+    display: table;
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+  .row-lg-height {
+    display: table-row;
+  }
+  .col-lg-height {
+    display: table-cell;
+    float: none;
+  }
+}
