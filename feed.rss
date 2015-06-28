@@ -1,5 +1,27 @@
 
-<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/compiler-platform-in-t4</guid><link>http://daveaglick.com/posts/compiler-platform-in-t4</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Using the .NET Compiler Platform in T4 Templates - Metaprogramming with Roslyn.</title><description>
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/announcing-wyam</guid><link>http://daveaglick.com/posts/announcing-wyam</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Announcing Wyam - A modular static content generator built on Roslyn, Razor, and rainbows.</title><description>&lt;p&gt;I am very proud to announce my newest project, &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt;. It's a static site and content generator built from the ground up to be modular and flexible.&lt;/p&gt;
+&lt;p&gt;Here's the thing: I like static site generators. I've been thinking about this problem for a long time (as in, many years). In fact, I did a roundup of &lt;a href="/posts/a-survey-of-dotnet-static-site-generators"&gt;.NET static site generators&lt;/a&gt; not too long ago. And while there are &lt;em&gt;a lot&lt;/em&gt; of generators out there, none of them really fit with the way I think about the problem. I don't want to follow a prescribed notion of what sort of content I'm creating or follow assumptions about the location of files. I wanted a static &lt;em&gt;content&lt;/em&gt; generator that is designed from the ground up to be flexible, even if it means making it slightly more complicated to configure. There are some generators that come close (I'm personally fond of the concepts in &lt;a href="http://www.metalsmith.io/"&gt;Metalsmith&lt;/a&gt;). I'm also a .NET developer and while there are a couple good static site generators in the .NET ecosystem (&lt;a href="https://github.com/Code52/pretzel"&gt;Pretzel&lt;/a&gt; and &lt;a href="https://github.com/Sandra/Sandra.Snow"&gt;Sandra.Snow&lt;/a&gt; come to mind), I certainly don't think we've hit peak generator in that world as we have in, say, JavaScript.&lt;/p&gt;
+&lt;p&gt;More to the point, I'm a developer. You're (probably) a developer. Why do most static site generators ignore that the people most likely to use them are developers? I'm all for making things easy, but I also want the ability to use my development skills to create the site that &lt;em&gt;I&lt;/em&gt; want to create. By making lots of assumptions and abstracting away so much of the process, I get the feeling a lot of the generators out there are try to cater to my mom. Except my mom will never use a static site generator. If I told her to "generate a blog with Jekyll" she'd say "that's nice dear, why don't you talk to your father about that."&lt;/p&gt;
+&lt;p&gt;While I've had ideas about how I would make such a thing for a long time, it wasn't until recently that the tools to realize my vision finally became available. Specifically, maturity of the &lt;a href="https://github.com/dotnet/roslyn"&gt;.NET Compiler Platform&lt;/a&gt; has finally made it practical to create applications that can compile their own code. This meant that in addition to providing lots of great abstractions and extensibility points to make static content generation &lt;em&gt;easy&lt;/em&gt;, I could also provide a mechanism to configre and extend the process for more &lt;em&gt;flexibility&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Most of that flexibility is evident in the way you configure Wyam. &lt;a href="http://wyam.io/getting-started/configuration"&gt;Wyam configuration files&lt;/a&gt; are written in C#. You can make extra classes and helper methods. You can create new base pages for the &lt;a href="http://wyam.io/modules/razor"&gt;Razor module&lt;/a&gt;. You can use delegates to configure modules. Whatever you need it to do, it can do, because you can write the code to do it.&lt;/p&gt;
+&lt;p&gt;But don't get me wrong, it also does a lot for you up front. Here's a list of the current features:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Written in .NET and &lt;a href="http://wyam.io/knowledgebase/writing-a-module"&gt;easily extensible&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/getting-started/installation"&gt;Low ceremony&lt;/a&gt; - download a zip file, unzip, and run&lt;/li&gt;
+&lt;li&gt;Flexible &lt;a href="http://wyam.io/getting-started/configuration"&gt;script-based configuration&lt;/a&gt; using the power of the .NET Compiler Platform (Roslyn)&lt;/li&gt;
+&lt;li&gt;Lots of &lt;a href="http://wyam.io/modules"&gt;modules&lt;/a&gt; for things like &lt;a href="http://wyam.io/modules/readfiles"&gt;reading&lt;/a&gt; and &lt;a href="http://wyam.io/modules/writefiles"&gt;writing&lt;/a&gt; files, handling &lt;a href="http://wyam.io/modules/frontmatter"&gt;frontmatter&lt;/a&gt;, and manipulating &lt;a href="http://wyam.io/modules/metadata"&gt;metadata&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/modules/yaml"&gt;YAML parser&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/modules/less"&gt;Less CSS compiler&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Support for multiple templating languages including &lt;a href="http://wyam.io/modules/razor"&gt;Razor&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Integrated &lt;a href="http://wyam.io/getting-started/usage"&gt;web server&lt;/a&gt; for previewing output&lt;/li&gt;
+&lt;li&gt;Integrated &lt;a href="http://wyam.io/getting-started/usage"&gt;file watching&lt;/a&gt; and regeneration&lt;/li&gt;
+&lt;li&gt;Full &lt;a href="http://wyam.io/getting-started/configuration#nuget"&gt;NuGet support&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/knowledgebase/embedded-use"&gt;Embeddable engine&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In fact, to dogfood Wyam I generated the &lt;a href="http://wyam.io"&gt;Wyam.io&lt;/a&gt; site with it (meta!). I also refactored this blog to be generated (a post on that coming soon). In the near future, I'll also be adding many more modules including JSON and Liquid (check out the &lt;a href="https://github.com/Wyamio/Wyam/issues"&gt;GitHub issues&lt;/a&gt; for a look at upcoming features). I'd also like to explore using Wyam for non-site things like generating documentation or eBooks. I would love to attract developers of all backgrounds, but my greatest hope is that Wyam can catch on as a kind of anti-Jekyll for the .NET crowd.&lt;/p&gt;
+&lt;p&gt;Oh, and about the name. &lt;em&gt;Wyam&lt;/em&gt; is a Native American name for the &lt;a href="https://en.wikipedia.org/wiki/Celilo_Falls"&gt;Celilo Falls&lt;/a&gt; area and is also roughly translated as "echo of falling water" or "sound of water upon the rocks". Which sounds kind of like static. For a static site generator. Get it? I also liked the image of water going over the falls as one thing then going through a transition as it emerged at the bottom as something else. Plus the name just sounds cool, and the domain was available. It's also very searchable (looking at you &lt;a href="https://code.visualstudio.com/"&gt;Visual Studio Code&lt;/a&gt;).&lt;/p&gt;
+
+</description><pubDate>Sun, 28 Jun 2015 00:00:00 Z</pubDate><a10:updated>2015-06-28T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/compiler-platform-in-t4</guid><link>http://daveaglick.com/posts/compiler-platform-in-t4</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Using the .NET Compiler Platform in T4 Templates - Metaprogramming with Roslyn.</title><description>
 &lt;p&gt;&lt;a href="https://msdn.microsoft.com/en-us/library/bb126445.aspx"&gt;T4 templates&lt;/a&gt; provide a powerful way to generate code at design time (and sometimes at compile time if you set up Visual Studio appropriately). The traditional way of accessing the code of your solution from within a T4 template is to &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/gg604090(v=vs.100).aspx"&gt;get the Visual Studio API&lt;/a&gt; (called &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/envdte.dte(v=vs.100).aspx"&gt;DTE&lt;/a&gt;). This has always seemed like a bit of a kludge to me and feels a little too far removed from the code and what it represents. We now have another option by using the .NET Compiler Platform from within a T4 template to parse, query, and output content based on the files in our solution.&lt;/p&gt;
 
 &lt;p&gt;In my particular case I wanted to scan all the source files in the same folder as the template, look for classes that derive from a specific base class (
@@ -672,253 +694,4 @@ while (true)
     retryCount++;
 }&lt;/pre&gt;
 
-&lt;p&gt;In the code above, the function in the call to &lt;code&gt;func()&lt;/code&gt; and the &lt;code&gt;retryPolicy&lt;/code&gt; object are provided based on usage. This just gives you an idea what's going on during the retry loop. Just look in &lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;the GitHub repository&lt;/a&gt; for more information.&lt;/p&gt;</description><pubDate>Tue, 23 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-23T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/computed-properties-and-entity-framework</guid><link>http://daveaglick.com/posts/computed-properties-and-entity-framework</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Computed Properties and Entity Framework - How to use your computed properties in predicates and projections.</title><description>
-&lt;p&gt;If you're using an ORM, it's not uncommon to have computed properties in addition to the ones that are stored directly in the database. Unfortunatly, these computed properties don't work with Entity Framework out of the box. In this post I'm going to discuss the problem and suggest various ways of mitigating it.&lt;/p&gt;
-    
-&lt;p&gt;For example, consider the following entities that I will use as an example throughout this post.&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public class Customer
-{
-  public string FirstName { get; set; }
-  public string LastName { get; set; }
-  public virtual ICollection&amp;lt;Holding&amp;gt; Holdings { get; private set; }
-
-  [NotMapped]
-  public decimal AccountValue
-  {
-    get { return Holdings.Sum(x =&amp;gt; x.Value); }
-  }
- 
-  [NotMapped]
-  public string FullName
-  {
-    get { return FirstName + " " + LastName; }
-  }
-}
-
-public class Holding
-{
-  public virtual Stock Stock { get; set; }
-  public int Quantity { get; set; }
-
-  [NotMapped]
-  public decimal Value
-  {
-    get { return Quantity * Stock.Price; }
-  }
-}
-
-public class Stock
-{
-  public string Symbol { get; set; }
-  public decimal Price { get; set; }
-}&lt;/pre&gt;
- 
-&lt;p&gt;As you can see, there are several computed properties including one that aggregates data from a collection and another that uses data from a reference. These properties work fine once you've obtained the entities and want to work with them. The problems start when you want to use them within a query or as part of a projection. For example, the following query will throw an exception:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(c =&amp;gt; c.AccountValue &amp;gt; 10);&lt;/pre&gt;
-
-&lt;p&gt;Likewise, this projection will also fail:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var result = ctx.Customers
-  .Select(c =&amp;gt; new
-  {
-    FullName = c.FullName,
-    AccountValue = c.AccountValue
-  });&lt;/pre&gt;
-      
-&lt;p&gt;In the first case we're trying to use a computed property within a predicate, but Entity Framework doesn't know how to convert &lt;code&gt;AccountValue&lt;/code&gt; to SQL code. In the projection, Entity Framework doesn't know how to convert &lt;code&gt;FullName&lt;/code&gt; to SQL code either. In both cases, it will fail to formulate a SQL query and throw an exception because it just doesn't know what to do with the properties that aren't directly stored in the database. Let's take a look at some of the ways we can get around this problem.&lt;/p&gt;
-
-
-&lt;h1&gt;Don't Use Computed Properties&lt;/h1&gt;
-
-&lt;p&gt;Part of the problem here is that Entity Framework and LINQ to Entities just doesn't know how to look at the actual code for each property. It tries to map the property name to the database and when it doesn't find a match it gives up. However, Entity Framework does actually know how to translate a large number of primitive operations and LINQ methods into SQL code. They just can't be hidden behind properties. The queries above could be rewritten as:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10);&lt;/pre&gt;
-
-&lt;pre class="prettyprint"&gt;var result = ctx.Customers
-  .Select(c =&amp;gt; new
-  {
-    FullName = c.FirstName + " " + c.LastName,
-    AccountValue = c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price)
-  });&lt;/pre&gt;
-
-&lt;p&gt;Notice how the code for each computed property is used directly in the query. Also notice that in the case of &lt;code&gt;AccountValue&lt;/code&gt; we had to not only expand it's code, but also the code of &lt;code&gt;Holding.Value&lt;/code&gt;. There can be no computed properties anywhere in the query code.&lt;/p&gt;
-
-&lt;p&gt;By now, it should be obvious why this doesn't work for anything but the simplest cases. It can become very complex when you have nested computed properties. It's also not DRY because you end up repeating the computation code in every query. And when the underlying logic changes you have to go find every query and change that too.&lt;/p&gt;
-
-
-&lt;h1&gt;Materialize The Entities&lt;/h1&gt;
-
-&lt;p&gt;This is the most common suggestion for getting around this problem. Entity Framework only has an issue if you try and execute the computed properties &lt;em&gt;on the database server&lt;/em&gt;. It works just fine when you run the computations against fully materialized entities. To make this work you just have to materialize the entities (I.e., fetch data from the database server) &lt;em&gt;before&lt;/em&gt; using any computed properties. With this approach the queries would look like:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.ToList().Where(c =&amp;gt; c.AccountValue &amp;gt; 10);&lt;/pre&gt;
-
-&lt;pre class="prettyprint"&gt;var result = ctx.Customers
-  .ToList()
-  .Select(c =&amp;gt; new
-  {
-    FullName = c.FullName,
-    AccountValue = c.AccountValue
-  });&lt;/pre&gt;
-
-&lt;p&gt;See that extra call to &lt;code&gt;.ToList()&lt;/code&gt; in there? That forces Entity Framework to go to the database, execute whatever portion of the query it's seen thus far, and return a &lt;code&gt;List&amp;lt;T&amp;gt;&lt;/code&gt; that can continue to be operated on. By the time the above queries get to the &lt;code&gt;.Where()&lt;/code&gt; and &lt;code&gt;.Select()&lt;/code&gt; calls, we're operating on a &lt;code&gt;List&amp;lt;Customer&amp;gt;&lt;/code&gt; collection instead of on the database.&lt;/p&gt;
-
-&lt;p&gt;Let's think about what this means though. If we're fetching data from the database &lt;em&gt;before&lt;/em&gt; executing the &lt;code&gt;.Where()&lt;/code&gt; condition, then we're pulling down &lt;em&gt;all the rows!&lt;/em&gt; Likewise, by going to the database before the &lt;code&gt;.Select()&lt;/code&gt; projection, we're fetching &lt;em&gt;all the columns&lt;/em&gt; and filtering after we've gotten them. This works okay for small tables and simple data. However, with any meaningful database it falls apart and your performance will quickly suffer.&lt;/p&gt;
-
-
-&lt;h1&gt;Encapsulate&lt;/h1&gt;
-
-&lt;p&gt;This approach gets a little more complicated. In this case we'll put the computed logic inside an extension method that we can use as if it were an actual LINQ operation. It will take the unmaterialized query and apply whatever additional computation we need. It's essentially like the first example of just not using computed properties except it puts the logic somewhere where it can be reused from other queries. Given the following extension method:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public static IQueryable&amp;lt;Customer&amp;gt; WhereAccountValueIsHigh(this IQueryable&amp;lt;Customer&amp;gt; customers)
-{
-  return customers.Where(c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10);
-}
-&lt;/pre&gt;
-
-&lt;p&gt;We can now write:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.WhereAccountValueIsHigh();&lt;/pre&gt;
-
-&lt;p&gt;That extension can be reused wherever we want customers with high account values. Likewise, for the projection we could create the following extension:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public class CustomerData
-{
-  string FullName { get; set; }
-  decimal AccountValue { get; set; }
-}
-
-public static IQueryable&amp;lt;CustomerData&amp;gt; SelectCustomerData(this IQueryable&amp;lt;Customer&amp;gt; customers)
-{
-  return customers.Select(c =&amp;gt; new CustomerData
-  {
-    FullName = c.FirstName + " " + c.LastName,
-    AccountValue = c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price)
-  });
-}
-&lt;/pre&gt;
-
-&lt;p&gt;Notice that I also need an actual projection type for the extension in this case, otherwise it wouldn't know what to use for the generic parameter of the return &lt;code&gt;IQueryable&lt;/code&gt;. This extension can be called like:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.SelectCustomerData();&lt;/pre&gt;
-
-&lt;p&gt;Both extensions let you move the computation somewhere that is at least a little bit reusable. For example, I could now also write the following to chain them together:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.WhereAccountValueIsHigh().SelectCustomerData();&lt;/pre&gt;
-
-&lt;p&gt;We still have a number of problems with this approach. The first is that we still have to duplicate the computation within the property and then again within the extension. This may be fine if you have a computation that you really only need to use in queries (in which case you can remove it as a property), but if not you're still stuck maintaining it in two places. You also still have to expand any nested called to computed properties. For example, if the &lt;code&gt;.WhereAccountValueIsHigh()&lt;/code&gt; extension had used the &lt;code&gt;Holding.Value&lt;/code&gt; property directly, you still would have gotten an exception. This approach does not work around the limitations of the LINQ to Entity query provider not recognizing computed properties, it just puts the actual computations somewhere a little more reusable. Finally, this approach is not very composable. If you had another view that needed an additional property (like the customers initials) you would either need to create an additional extension for the new view or add the initials calculation to &lt;code&gt;.SelectCustomerData()&lt;/code&gt; and then do an additional projection to remove it from the first view that doesn't need it.&lt;/p&gt;
-
-
-&lt;h1&gt;Expression Trees and LINQ to Entities&lt;/h1&gt;
-
-&lt;p&gt;All of the approaches so far have attempted to work around the problem by ensuring that the computed properties never reach LINQ to entities and therefore never get translated to SQL. Before looking at a different type of approach, let's back up a moment and consider how LINQ to entities actually does translate all those LINQ methods and primitive operations to SQL. Under the hood, LINQ to entities reads &lt;a href="http://msdn.microsoft.com/en-us/library/bb397951.aspx"&gt;Expression Trees&lt;/a&gt;, which is a fundamental concept of the entire LINQ system. Essentially, expression trees represent code in a high-level abstraction. LINQ to entities knows how to understand an expression tree and convert most (but not all) of the corresponding commands into SQL statements. In addition, all of the LINQ extensions like &lt;code&gt;.Where()&lt;/code&gt; and &lt;code&gt;.Select()&lt;/code&gt; essentially build up the expression tree that LINQ to entities eventually processes.&lt;/p&gt;
-
-&lt;p&gt;The question then becomes, how can we pass our own expression tree to LINQ to entities? And how can be construct such an expression tree that represents the logic in our computed properties? Thankfully, there are a number of folks who've talked this very question.&lt;/p&gt;
-
-
-&lt;h2&gt;Write Your Own Expressions&lt;/h2&gt;
-
-&lt;p&gt;One approach would be to just write your own `Expression`. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public readonly Expression&amp;lt;Func&amp;lt;Customer, bool&amp;gt;&amp;gt; AccountValueIsHigh = c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price) &amp;gt; 10;&lt;/pre&gt;
-
-&lt;p&gt;This can then be used like:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers.Where(AccountValueIsHigh);&lt;/pre&gt;
-
-&lt;p&gt;One problem with this approach is that we can't use an &lt;code&gt;Expression&lt;/code&gt; directly in a &lt;code&gt;.Select()&lt;/code&gt; call because the compiler has no idea how to convert the &lt;code&gt;Expression&lt;/code&gt; into something that can be assigned.&lt;/p&gt;
-
-
-&lt;h2&gt;LINQ Expression Projection&lt;/h2&gt;
-
-&lt;p&gt;To address the problem I just mentioned and provide a way to use your own &lt;code&gt;Expression&lt;/code&gt; object directly in &lt;code&gt;.Select()&lt;/code&gt; projection calls, Asher Barak has created a project called &lt;a href="http://linqexprprojection.codeplex.com/"&gt;LINQ Expression Projection&lt;/a&gt;. It was originally explained in &lt;a href="http://www.codeproject.com/Articles/402594/Black-Art-LINQ-expressions-reuse"&gt;this CodeProject article&lt;/a&gt; and allows you to essentially wrap your expression in something that can be used as an assignment. For example, given the following &lt;code&gt;Expression&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public readonly Expression&amp;lt;Func&amp;lt;Customer, decimal&amp;gt;&amp;gt; AccountValueExpression = c =&amp;gt; c.Holdings.Sum(h =&amp;gt; h.Quantity * h.Stock.Price);&lt;/pre&gt;
-
-&lt;p&gt;You would write:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
-  .AsExpressionProjectable()
-  .Select(c =&amp;gt; new
-  {
-    AccountValue = AccountValueExpression.Project&amp;lt;decimal&amp;gt;()
-  });&lt;/pre&gt;
-
-&lt;p&gt;Notice the extra call to &lt;code&gt;.AsExpressionProjectable()&lt;/code&gt;, which prepares the query for projection and sets up a scan for all instances of the &lt;code&gt;.Project&amp;lt;T&amp;gt;()&lt;/code&gt; extension method. Once found, the library swaps the appropriate &lt;code&gt;Expression&lt;/code&gt; in for the assignment at runtime.&lt;/p&gt;
-
-
-&lt;h2&gt;Linq.Translations&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href="http://damieng.com/"&gt;Damien Guard&lt;/a&gt;, &lt;a href="http://davidfowl.com/"&gt;David Fowler&lt;/a&gt;, and Colin Meek has done something similar in a much more generic way. Their &lt;a href="https://github.com/damieng/Linq.Translations"&gt;Linq.Translations library&lt;/a&gt; was first described in &lt;a href="http://damieng.com/blog/2009/06/24/client-side-properties-and-any-remote-linq-provider"&gt;a blog post on Damien's blog&lt;/a&gt;. The idea is that you set up an &lt;code&gt;Expression&lt;/code&gt;-like variable that can be used within the computed property. Then when you write a query, you can just use the computed property without worrying about the &lt;code&gt;Expression&lt;/code&gt; at all. The only extra thing you need is to make a final call to &lt;code&gt;.WithTranslations()&lt;/code&gt; in the LINQ query to convert all the computed properties to their &lt;code&gt;Expression&lt;/code&gt; equivalents. In usage, it would look something like this:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public class Customer
-{
-  public string FirstName { get; set; }
-  public string LastName { get; set; }
-
-  private static readonly CompiledExpression&amp;lt;Customer, string&amp;gt; fullNameExpression
-     = DefaultTranslationOf&amp;lt;Customer&amp;gt;.Property(e =&amp;gt; e.FullName).Is(e =&amp;gt; e.FirstName + " " + e.LastName);
-
-  [NotMapped]
-  public string FullName
-  {
-    get { return fullNameExpression.Evaluate(this); }
-  }
-}&lt;/pre&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
-  .Select(c =&amp;gt; new
-  {
-    FullName = c.FullName
-  })
-  .WithTranslations();&lt;/pre&gt;
-
-&lt;p&gt;While this is somewhat similar to the &lt;a href="http://linqexprprojection.codeplex.com/"&gt;LINQ Expression Projection&lt;/a&gt; project, it trades complexity during definition for ease of use in queries.&lt;/p&gt;
-
-
-&lt;h2&gt;DelegateDecompiler&lt;/h2&gt;
-
-&lt;p&gt;Hopefully you're still with me because this last project blew my mind. I first learned about &lt;a href="https://github.com/hazzik/DelegateDecompiler"&gt;DelegateDecompiler&lt;/a&gt; from &lt;a href="http://lostechies.com/jimmybogard/2014/05/07/projecting-computed-properties-with-linq-and-automapper/"&gt;this blog post&lt;/a&gt; on &lt;a href="http://lostechies.com/jimmybogard/"&gt;Jimmy Bogard's blog&lt;/a&gt;. While &lt;a href="https://github.com/hazzik/DelegateDecompiler"&gt;DelegateDecompiler&lt;/a&gt; still attempts to pass an &lt;code&gt;Expression&lt;/code&gt; to the query provider, it takes the burden of creating the &lt;code&gt;Expression&lt;/code&gt; out of your hands. It does this by compiling any computed properties into IL then decompiling the IL back into an expression tree. This way it can transparently handle just about any computation you give it including nested computed properties, custom methods, etc. The one caveat is that even though it may seem like it, it's not magic and can't make Entity Framework and LINQ to Entities recognize methods, classes, etc. that they wouldn't have if you had used them directly.&lt;/p&gt;
-
-&lt;p&gt;Using DelegateDecompiler is stupidly simple. You just decorate your computed properties with &lt;code&gt;ComputedAttribute&lt;/code&gt; and then call &lt;code&gt;.Decompile()&lt;/code&gt; in your query. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public class Customer
-{
-  public string FirstName { get; set; }
-  public string LastName { get; set; }
-
-  [NotMapped]
-  [Computed]
-  public string FullName
-  {
-    get { return FirstName + " " + LastName; }
-  }
-}&lt;/pre&gt;
-
-&lt;pre class="prettyprint"&gt;var customers = ctx.Customers
-  .Select(c =&amp;gt; new
-  {
-    FullName = c.FullName
-  })
-  .Decompile();&lt;/pre&gt;
-
-&lt;p&gt;That's all there is to it. There's even a &lt;a href="https://www.nuget.org/packages/DelegateDecompiler.EntityFramework/"&gt;DelegateDecompiler.EntityFramework&lt;/a&gt; library that you can use if you want to support more advanced Entity Framework functionality such as async queries (though it's not necessary for simple Entity Framework usage). In fact, you can make it even easier to use by automatically processing &lt;code&gt;NotMappedAttribute&lt;/code&gt; to indicate computed properties. To do this, just create a new &lt;code&gt;Configuration&lt;/code&gt; class:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;public class DelegateDecompilerConfiguration : DefaultConfiguration
-{
-    public override bool ShouldDecompile(MemberInfo memberInfo)
-    {
-        // Automatically decompile all NotMapped members
-        return base.ShouldDecompile(memberInfo) || memberInfo.GetCustomAttributes(typeof(NotMappedAttribute), true).Length &amp;gt; 0;
-    }
-}&lt;/pre&gt;
-
-&lt;p&gt;And then register it like this:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;DelegateDecompiler.Configuration.Configure(new DelegateDecompilerConfiguration());&lt;/pre&gt;
-
-
-&lt;h1&gt;Conclusions&lt;/h1&gt;
-
-&lt;p&gt;As you can see, there are a lot of different ways of working around the lack of support for computed properties in Entity Framework and LINQ to Entities. Which approach you choose depends largely on the factors of your project such as database complexity, query complexity, reuse requirements, etc. Hopefully one of these methods will help you tame all that computation and help release your data from your database.&lt;/p&gt;</description><pubDate>Thu, 11 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-11T00:00:00Z</a10:updated></item></channel></rss>
+&lt;p&gt;In the code above, the function in the call to &lt;code&gt;func()&lt;/code&gt; and the &lt;code&gt;retryPolicy&lt;/code&gt; object are provided based on usage. This just gives you an idea what's going on during the retry loop. Just look in &lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;the GitHub repository&lt;/a&gt; for more information.&lt;/p&gt;</description><pubDate>Tue, 23 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-23T00:00:00Z</a10:updated></item></channel></rss>
