@@ -1,5 +1,94 @@
 
-<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/announcing-wyam</guid><link>http://daveaglick.com/posts/announcing-wyam</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Announcing Wyam - A modular static content generator built on Roslyn, Razor, and rainbows.</title><description>&lt;p&gt;I am very proud to announce my newest project, &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt;. It's a static site and content generator built from the ground up to be modular and flexible.&lt;/p&gt;
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/converting-my-blog-to-wyam</guid><link>http://daveaglick.com/posts/converting-my-blog-to-wyam</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Converting My Blog to Wyam - How I went from compiled to static in less than a day.</title><description>&lt;p&gt;I &lt;a href="/posts/announcing-wyam"&gt;recently launched a new static site generator&lt;/a&gt;, and I figured what better test of whether it's ready for widespread use than to convert my entire blog to use it. Given that this blog was originally built with ASP.NET MVC, it should be a good fit for converting over to a Razor-based static site generator. The process was actually  easier than I thought it would be and suggests that &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt; is already ready for production use on personal sites, blogs, etc.&lt;/p&gt;
+&lt;p&gt;I went into the process with a few requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The rendered HTML had to match the original site. I wasn't interested in redesigning things at the same time I was converting the backend.&lt;/li&gt;
+&lt;li&gt;I wanted to support Markdown documents as well as Razor pages (which was the only option before).&lt;/li&gt;
+&lt;li&gt;The new site couldn't be more complex than the old site. For example, site layouts still had to be contained in a single file, etc.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I also decided that I wanted to see if I could easily support an alternate development environment that didn't involve Visual Studio (since Visual Studio wouldn't have recognized the collection of files Wyam was reading as a normal web site project anyway). I took the opportunity to really dig in to &lt;a href="https://code.visualstudio.com/"&gt;Visual Studio Code&lt;/a&gt; and am happy to report I have fallen in love with it as a lightweight editing alternative when you don't need a full IDE. I also fired up Wyam in a console with the command &lt;code&gt;Wyam.exe --watch --preview&lt;/code&gt; and left it running in the background while I worked. That way, any time I saved a file, the site would get regenerated and I could (almost) immediately preview it in a browser using the local Wyam web server.&lt;/p&gt;
+&lt;p&gt;The first step was getting all the layout files to work. Because the &lt;a href="http://wyam.io/modules/razor"&gt;Wyam Razor module&lt;/a&gt; already supports the standard Razor layout file conventions, this mostly amounted to copying and pasting the layout and content files to the new site. Once I got the general layout working, I starting bringing over some of the non-blog pages (like &lt;a href="/about"&gt;about&lt;/a&gt; and &lt;a href="/likes"&gt;likes&lt;/a&gt;). These were originally Razor pages so I just left them that way. This is where I hit my first snag. The original site used a custom Razor base page to expose a page property that the views could use for easy access to &lt;a href="http://fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt;. Getting &lt;a href="http://fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt; into the static site wasn't hard as I had already developed a &lt;a href="https://www.nuget.org/packages/FluentBootstrap.Wyam"&gt;NuGet package for this purpose&lt;/a&gt;, but exposing the property so I didn't have to rewrite all my views turned out to be a challenge. To resolve this, I added support to the &lt;a href="http://wyam.io/modules/razor"&gt;Wyam Razor module&lt;/a&gt; for specifying base pages and then created my base page class right in the Wyam config file for the site:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public abstract class RazorPage : BaseRazorPage
+{
+  public WyamBootstrapHelper Bs
+  {
+    get { return Html.Bootstrap(); }
+  }
+}
+// ...
+Pipelines.Add(
+  // ...
+  Razor(typeof(RazorPage))
+  // ...
+);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Once I had the non-blog pages working, I moved on the blog posts. In the previous site each post specified it's metadata (like title, published date, etc.) by setting additional Razor page properties from the custom base class. In this case, I had a better mechanism for specifying metadata and used &lt;a href="http://wyam.io/modules/yaml"&gt;YAML&lt;/a&gt; &lt;a href="http://wyam.io/modules/frontmatter"&gt;front matter&lt;/a&gt; for the metadata. This required me to manually change the declarations at the top of each blog post from something like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{
+    Title = "Announcing LINQPad.CodeAnalysis";
+    Lead = ".NET Compiler Platform helpers and utilities for LINQPad.";
+    Published = new DateTime(2015, 3, 18);
+    Tags = new[] { "LINQPad", "open source", "Roslyn", ".NET Compiler Platform" };
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To something like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;Title: Announcing LINQPad.CodeAnalysis
+Lead: .NET Compiler Platform helpers and utilities for LINQPad.
+Published: 3/18/2015
+Tags:
+  - LINQPad
+  - open source
+  - Roslyn
+  - .NET Compiler Platform
+---
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It's a nice side benefit that the YAML is easier to read as well. This process took about an hour for all my posts.&lt;/p&gt;
+&lt;p&gt;The last step was to convert over the more dynamic pages in the site, specifically the &lt;a href="/posts"&gt;post archives&lt;/a&gt; and &lt;a href="/tags"&gt;list of tags&lt;/a&gt; and cooresponding tag archives. For the post archive, I wrote a LINQ statement that used the Wyam metadata to fetch all the posts in the site:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{
+  foreach(IGrouping&amp;lt;int, IDocument&amp;gt; year in Documents
+    .Where(x =&amp;gt; x.ContainsKey("Published"))
+    .OrderByDescending(x =&amp;gt; x.Get&amp;lt;DateTime&amp;gt;("Published"))
+    .GroupBy(x =&amp;gt; x.Get&amp;lt;DateTime&amp;gt;("Published").Year)
+    .OrderByDescending(x =&amp;gt; x.Key))
+  {
+    &amp;lt;h3&amp;gt;@year.Key&amp;lt;/h3&amp;gt;
+    // ...
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Then for the tags, I did something similar (this uses the special &lt;code&gt;ToLookup&lt;/code&gt; extension for handling metadata lookup in Wyam):&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{    
+  var DocumentsByTag = Documents
+    .ContainsKey("Published")
+    .ToLookup&amp;lt;string&amp;gt;("Tags");
+}
+// ...
+@{
+  foreach (var tagDocuments in DocumentsByTag.OrderBy(x =&amp;gt; x.Key))
+  {
+    // ...
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally, to generate the individual archive page for each tag, I added a special pipeline that outputs a page per tag:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;Pipelines.Add("Tags",
+  ReadFiles(@"tags\index.cshtml"),
+  FrontMatter(),
+  Execute((doc, ctx) =&amp;gt; ctx.Documents
+    .Where(x =&amp;gt; x.ContainsKey("Published") &amp;amp;&amp;amp; x.ContainsKey("Tags"))
+    .SelectMany(x =&amp;gt; x.Get&amp;lt;string[]&amp;gt;("Tags"))
+    .Distinct()
+    .Select(x =&amp;gt; doc.Clone(new Dictionary&amp;lt;string, object&amp;gt;()
+    { 
+      { "Title", x },
+      { "Tag", x }
+    }))),
+  Razor(typeof(RazorPage)),
+  WriteFiles(x =&amp;gt; HtmlHelperExtensions.GetTagLink(x.String("Tag")) + ".html")
+);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In total, it probably took me about 6 hours to convert over the entire site. While it wasn't turn-key, that's not really the point anyway. I could have built the site from scratch on a site generator that prescribed a specific file convention, metadata, etc. but instead I was able to relativly easily adapt an existing, fairly complex site without too much trouble. That's the reason I built Wyam, to give developers a powerful tool to build exactly the content they want, the way they want to build it. Now it's &lt;a href="http://wyam.io/knowledgebase/continuous-integration"&gt;building automatically from AppVeyor on every commit&lt;/a&gt;, I can use &lt;a href="http://wyam.io/modules/markdown"&gt;Markdown&lt;/a&gt;, and it gets served lightning-fast for free from &lt;a href="https://pages.github.com/"&gt;GitHub Pages&lt;/a&gt;. If you're interested in doing something similar, &lt;a href="https://github.com/daveaglick/daveaglick"&gt;check out the source code for this site&lt;/a&gt; as an example. And please don't hesitate to ask here or on Twitter for help!&lt;/p&gt;
+
+</description><pubDate>Tue, 07 Jul 2015 00:00:00 Z</pubDate><a10:updated>2015-07-07T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/announcing-wyam</guid><link>http://daveaglick.com/posts/announcing-wyam</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Announcing Wyam - A modular static content generator built on Roslyn, Razor, and rainbows.</title><description>&lt;p&gt;I am very proud to announce my newest project, &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt;. It's a static site and content generator built from the ground up to be modular and flexible.&lt;/p&gt;
 &lt;p&gt;Here's the thing: I like static site generators. I've been thinking about this problem for a long time (as in, many years). In fact, I did a roundup of &lt;a href="/posts/a-survey-of-dotnet-static-site-generators"&gt;.NET static site generators&lt;/a&gt; not too long ago. And while there are &lt;em&gt;a lot&lt;/em&gt; of generators out there, none of them really fit with the way I think about the problem. I don't want to follow a prescribed notion of what sort of content I'm creating or follow assumptions about the location of files. I wanted a static &lt;em&gt;content&lt;/em&gt; generator that is designed from the ground up to be flexible, even if it means making it slightly more complicated to configure. There are some generators that come close (I'm personally fond of the concepts in &lt;a href="http://www.metalsmith.io/"&gt;Metalsmith&lt;/a&gt;). I'm also a .NET developer and while there are a couple good static site generators in the .NET ecosystem (&lt;a href="https://github.com/Code52/pretzel"&gt;Pretzel&lt;/a&gt; and &lt;a href="https://github.com/Sandra/Sandra.Snow"&gt;Sandra.Snow&lt;/a&gt; come to mind), I certainly don't think we've hit peak generator in that world as we have in, say, JavaScript.&lt;/p&gt;
 &lt;p&gt;More to the point, I'm a developer. You're (probably) a developer. Why do most static site generators ignore that the people most likely to use them are developers? I'm all for making things easy, but I also want the ability to use my development skills to create the site that &lt;em&gt;I&lt;/em&gt; want to create. By making lots of assumptions and abstracting away so much of the process, I get the feeling a lot of the generators out there are try to cater to my mom. Except my mom will never use a static site generator. If I told her to "generate a blog with Jekyll" she'd say "that's nice dear, why don't you talk to your father about that."&lt;/p&gt;
 &lt;p&gt;While I've had ideas about how I would make such a thing for a long time, it wasn't until recently that the tools to realize my vision finally became available. Specifically, maturity of the &lt;a href="https://github.com/dotnet/roslyn"&gt;.NET Compiler Platform&lt;/a&gt; has finally made it practical to create applications that can compile their own code. This meant that in addition to providing lots of great abstractions and extensibility points to make static content generation &lt;em&gt;easy&lt;/em&gt;, I could also provide a mechanism to configre and extend the process for more &lt;em&gt;flexibility&lt;/em&gt;.&lt;/p&gt;
@@ -600,98 +689,4 @@ Console.Write(value);  // 25&lt;/pre&gt;
 
 &lt;h2&gt;nameof()&lt;/h2&gt;
 
-&lt;p&gt;Finally, it looks like the compiler and language designers are recognizing some of the problems with certain kinds of magic strings. One of the features I'm most looking forward to in C# 6 is the introduction of &lt;a href="http://www.codeproject.com/Articles/849265/What-s-new-in-Csharp-nameof-Expressions"&gt;a new &lt;code&gt;nameof()&lt;/code&gt; expression&lt;/a&gt;. It will return a string literal for any property and can help eliminate magic strings from error messages, validation checks, UI output, etc.&lt;/p&gt;</description><pubDate>Mon, 05 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-05T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/automatic-retry-for-linq-to-sql</guid><link>http://daveaglick.com/posts/automatic-retry-for-linq-to-sql</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Automatic Retry for LINQ to SQL - A new library that makes retrying transient failures in LINQ to SQL easier.</title><description>
-
-&lt;div class="row"&gt;
- &lt;div class="col-md-6"&gt;        &lt;strong&gt;&lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;GitHub&lt;/a&gt;&lt;/strong&gt;
-&lt;/div&gt;
- &lt;div class="col-md-6"&gt;        &lt;strong&gt;&lt;a href="http://www.nuget.org/packages/LinqToSqlRetry/"&gt;NuGet&lt;/a&gt;&lt;/strong&gt;
-&lt;/div&gt;
-&lt;/div&gt;&lt;hr&gt;
-
-&lt;p&gt;&lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;LinqToSqlRetry&lt;/a&gt; is a simple library to help manage retries in LINQ to SQL. This is particularly important in cloud-based infrastructures like Azure where transient failures are not uncommon. And despite the popularity of Entity Framework, Dapper, and other ORM or data access libraries, there is still a place for simple LINQ to SQL code.&lt;/p&gt;
-
-&lt;p&gt;Retry logic is provided via extension methods, so you will need to bring the &lt;code&gt;LinqToSqlRetry&lt;/code&gt; namespace into scope in every file you need retry logic:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;using LinqtoSqlRetry;&lt;/pre&gt;
- 
-
-&lt;h2&gt;Retry On Submit Changes&lt;/h2&gt;
-
-&lt;p&gt;Instead of using &lt;code&gt;DataContext.SubmitChanges()&lt;/code&gt; just use &lt;code&gt;DataContext.SubmitChangesRetry()&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
-{
-  context.Items.InsertOnSubmit(new Item { Name = "ABC" });
-  context.SubmitChangesRetry();
-}&lt;/pre&gt;
-
-
-&lt;h2&gt;Retry on Queries&lt;/h2&gt;
-
-&lt;p&gt;Add the &lt;code&gt;Retry()&lt;/code&gt; extension method to the end of your queries. It should generally be the last extension you use before materializing the query (which happens when you use extensions like &lt;code&gt;ToList()&lt;/code&gt; or &lt;code&gt;Count()&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
-{
-  int count = context.Items.Where(x =&amp;gt; x.Name == "ABC").Retry().Count();
-}&lt;/pre&gt;
-
-
-
-&lt;h2&gt;Retry Policy&lt;/h2&gt;
-
-&lt;p&gt;The retry logic is controlled by a policy that indicates when a retry should take place and how long to wait before retrying the operation. Two policies are supplied:&lt;/p&gt;
-
-
-&lt;ul&gt;
- &lt;li&gt;        &lt;code&gt;LinearRetry&lt;/code&gt; retries a specific number of times (3 by default) and waits a specified amount each time (10 seconds by default).
-&lt;/li&gt;
- &lt;li&gt;        &lt;code&gt;ExponentialRetry&lt;/code&gt; retries a specific number of times (3 by default) and waits an increasing multiple of time (5 seconds by default) after an initial wait on the first retry (10 seconds by default).
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;By default the &lt;code&gt;LinearRetry&lt;/code&gt; policy is used. The policy that you use and it's settings can be changed by passing it in to any of the extension methods:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;using(var context = new MyDbContext())
-{
-  // Start with a 4 second wait, increasing by a factor of 2, for 5 attempts
-  var retryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(2), 5);
-  context.Items.InsertOnSubmit(new Item { Name = "ABC" });
-  context.SubmitChangesRetry(retryPolicy);
-  int count = context.Items.Where(x =&amp;gt; x.Name == "ABC").Retry(retryPolicy).Count();
-}&lt;/pre&gt;
-
-&lt;p&gt;You can specify your own custom policies to do things like log retry attempts, use more complex logic, retry on different types of errors, etc. by implementing &lt;code&gt;IRetryPolicy&lt;/code&gt;.&lt;/p&gt;
-
-
-&lt;h2&gt;Retry for Arbitrary Operations&lt;/h2&gt;
-
-&lt;p&gt;You can also retry any arbitrary operation with the Retry() extension methods on any IRetryPolicy object. There are two of them, one takes an &lt;code&gt;Action&lt;/code&gt; and the other takes a &lt;code&gt;Func&amp;lt;t&amp;gt;&lt;/code&gt; and returns the result. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var retryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(2), 5);
-retryPolicy.Retry(() =&amp;gt; AMethodThatMightFail());&lt;/pre&gt;
-
-
-&lt;h2&gt;Under the Hood&lt;/h2&gt;
-
-&lt;p&gt;The retry logic under the hood is fairly simple:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;int retryCount = 0;
-while (true)
-{
-    try
-    {
-        return func();
-    }
-    catch (Exception ex)
-    {
-        TimeSpan? interval = retryPolicy.ShouldRetry(retryCount, ex);
-        if (!interval.HasValue)
-        {
-            throw;
-        }
-        Thread.Sleep(interval.Value);
-    }
-    retryCount++;
-}&lt;/pre&gt;
-
-&lt;p&gt;In the code above, the function in the call to &lt;code&gt;func()&lt;/code&gt; and the &lt;code&gt;retryPolicy&lt;/code&gt; object are provided based on usage. This just gives you an idea what's going on during the retry loop. Just look in &lt;a href="https://github.com/daveaglick/LinqToSqlRetry"&gt;the GitHub repository&lt;/a&gt; for more information.&lt;/p&gt;</description><pubDate>Tue, 23 Dec 2014 00:00:00 Z</pubDate><a10:updated>2014-12-23T00:00:00Z</a10:updated></item></channel></rss>
+&lt;p&gt;Finally, it looks like the compiler and language designers are recognizing some of the problems with certain kinds of magic strings. One of the features I'm most looking forward to in C# 6 is the introduction of &lt;a href="http://www.codeproject.com/Articles/849265/What-s-new-in-Csharp-nameof-Expressions"&gt;a new &lt;code&gt;nameof()&lt;/code&gt; expression&lt;/a&gt;. It will return a string literal for any property and can help eliminate magic strings from error messages, validation checks, UI output, etc.&lt;/p&gt;</description><pubDate>Mon, 05 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-05T00:00:00Z</a10:updated></item></channel></rss>
