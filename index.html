@@ -15,6 +15,8 @@
         <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
         <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
 
         <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
         <link href="/Content/prettify.css" rel="stylesheet">
@@ -41,7 +43,7 @@
         <script>
             WebFont.load({
                 google: {
-                    families: ['Lato:400,900:latin', 'Droid+Serif::latin', 'Indie+Flower::latin']
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin']
                 },
                 custom: {
                     families: ['daveaglick'],
@@ -101,6 +103,20 @@
 <div class="row">
  <div class="col-sm-8 right-border">            <div>
                 <h3>
+                    <a href="/posts\serving-extensionless-urls-with-owin">Serving Extensionless URLs with OWIN</a>
+                    <small>
+  <span class="label label-default label-date icon-calendar">7/8/2015</span></small>
+                    <small>
+
+  <span class="label label-default label-comments icon-talk-chat-2">                            <a href="/posts\serving-extensionless-urls-with-owin#disqus_thread" data-disqus-identifier="serving-extensionless-urls-with-owin"></a>
+</span>                    </small>
+                </h3>
+            </div>
+
+  <p class="lead">My first OWIN middleware.</p><p><a href="http://wyam.io">I recently</a> had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the <a href="http://owin.org/">OWIN specification</a> and related projects. Specifically, the <a href="http://katanaproject.codeplex.com/documentation">Katana project</a> from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.</p>
+  <a role="button" href="/posts\serving-extensionless-urls-with-owin" class="btn btn-default">Read More &rarr;</a>                <hr /> 
+            <div>
+                <h3>
                     <a href="/posts\converting-my-blog-to-wyam">Converting My Blog to Wyam</a>
                     <small>
   <span class="label label-default label-date icon-calendar">7/7/2015</span></small>
@@ -126,21 +142,7 @@
             </div>
 
   <p class="lead">A modular static content generator built on Roslyn, Razor, and rainbows.</p><p>I am very proud to announce my newest project, <a href="http://wyam.io">Wyam</a>. It's a static site and content generator built from the ground up to be modular and flexible.</p>
-  <a role="button" href="/posts\announcing-wyam" class="btn btn-default">Read More &rarr;</a>                <hr /> 
-            <div>
-                <h3>
-                    <a href="/posts\compiler-platform-in-t4">Using the .NET Compiler Platform in T4 Templates</a>
-                    <small>
-  <span class="label label-default label-date icon-calendar">4/23/2015</span></small>
-                    <small>
-
-  <span class="label label-default label-comments icon-talk-chat-2">                            <a href="/posts\compiler-platform-in-t4#disqus_thread" data-disqus-identifier="compiler-platform-in-t4"></a>
-</span>                    </small>
-                </h3>
-            </div>
-
-  <p class="lead">Metaprogramming with Roslyn.</p><p><a href="https://msdn.microsoft.com/en-us/library/bb126445.aspx">T4 templates</a> provide a powerful way to generate code at design time (and sometimes at compile time if you set up Visual Studio appropriately). The traditional way of accessing the code of your solution from within a T4 template is to <a href="https://msdn.microsoft.com/en-us/library/vstudio/gg604090(v=vs.100).aspx">get the Visual Studio API</a> (called <a href="https://msdn.microsoft.com/en-us/library/vstudio/envdte.dte(v=vs.100).aspx">DTE</a>). This has always seemed like a bit of a kludge to me and feels a little too far removed from the code and what it represents. We now have another option by using the .NET Compiler Platform from within a T4 template to parse, query, and output content based on the files in our solution.</p>
-  <a role="button" href="/posts\compiler-platform-in-t4" class="btn btn-default">Read More &rarr;</a>        <hr />
+  <a role="button" href="/posts\announcing-wyam" class="btn btn-default">Read More &rarr;</a>        <hr />
         <div><strong><a href="/posts"> Archive</a></strong></div>
 
  </div>

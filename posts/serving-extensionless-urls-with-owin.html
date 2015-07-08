@@ -7,7 +7,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
-	<title>Dave Glick - Exporting a GtkSharp TreeView to CSV</title>
+	<title>Dave Glick - Serving Extensionless URLs with OWIN</title>
         <meta name="description" content="The personal blog of Dave Glick" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
 
@@ -27,10 +27,10 @@
         <meta name="msapplication-tooltip" content="Dave Glick" />
         <meta name="msapplication-starturl" content="/" />
 
-        <meta property="og:title" content="Dave Glick - Exporting a GtkSharp TreeView to CSV" />
+        <meta property="og:title" content="Dave Glick - Serving Extensionless URLs with OWIN" />
         
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="http://daveaglick.com/posts\exporting-a-gtksharp-treeview-to-csv.cshtml" />
+        <meta property="og:url" content="http://daveaglick.com/posts\serving-extensionless-urls-with-owin.md" />
         <!-- TODO: More social graph meta tags -->
 
         <script src="/Scripts/jquery-2.1.1.min.js"></script>
@@ -97,8 +97,8 @@
 
 <div class="banner container-sm-height">
  <div class="row row-sm-height">
-  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Exporting a GtkSharp TreeView to CSV</div>
-                <div class="lead">All packaged up in nice little utility methods.</div>
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Serving Extensionless URLs with OWIN</div>
+                <div class="lead">My first OWIN middleware.</div>
 </div>
   <div class="col-sm-4 col-sm-height col-bottom stats">
    <div class="row">
@@ -106,18 +106,12 @@
                         <div><strong>Tags</strong></div>
                         <div>
 
-     <a role="button" href="/tags/cellrenderer" class="btn btn-default btn-sm tag-button icon-tag-2"> CellRenderer</a>
-     <a role="button" href="/tags/csv" class="btn btn-default btn-sm tag-button icon-tag-2"> CSV</a>
-     <a role="button" href="/tags/gtksharp" class="btn btn-default btn-sm tag-button icon-tag-2"> GtkSharp</a>
-     <a role="button" href="/tags/mono" class="btn btn-default btn-sm tag-button icon-tag-2"> Mono</a>
-     <a role="button" href="/tags/treemodel" class="btn btn-default btn-sm tag-button icon-tag-2"> TreeModel</a>
-     <a role="button" href="/tags/treeview" class="btn btn-default btn-sm tag-button icon-tag-2"> TreeView</a>
-     <a role="button" href="/tags/treeviewcolumn" class="btn btn-default btn-sm tag-button icon-tag-2"> TreeViewColumn</a>                        </div>     
+     <a role="button" href="/tags/owin" class="btn btn-default btn-sm tag-button icon-tag-2"> OWIN</a>                        </div>     
                         <div><strong>Published</strong></div>
-                        <div class="icon-calendar"> &nbsp;Friday, April 9, 2010</div>
+                        <div class="icon-calendar"> &nbsp;Wednesday, July 8, 2015</div>
                     <div><strong>Comments</strong></div>
-                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="exporting-a-gtksharp-treeview-to-csv"></a></div>               
-                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/exporting-a-gtksharp-treeview-to-csv" data-via="daveaglick" data-text="Exporting a GtkSharp TreeView to CSV" data-count="none">Tweet</a></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="serving-extensionless-urls-with-owin"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/serving-extensionless-urls-with-owin" data-via="daveaglick" data-text="Serving Extensionless URLs with OWIN" data-count="none">Tweet</a></div>
 
     </div>
    </div>
@@ -127,114 +121,136 @@
 <hr />
 
 <div class="row">
- <div id="post-content" class="col-sm-12"><p>I recently had to create some functionality to export a TreeView widget to a CSV file for further analysis. Since I tend to think about generic behavior, I decided to code up a method that would take any arbitrary TreeView and perform the export operation. Luckily, the TreeView widget and the attached TreeModel both contain a lot of functionality for accessing the data and it's presentation. I decided that I wanted the exported CSV file to represent the perspective of the model as currently represented in the TreeView including column visibility and sort order. This led to the trickiest part of the process. Because a CellRenderer can be customized using cell data functions (such as those added by a call to TreeViewColumn.SetCellDataFunc), I had to pull the content to export from the CellRenderer as opposed to pulling directly from the TreeModel. Turns out there's a method to take the TreeIter from a TreeModel and apply it to all the CellRenderers in a given TreeViewColumn. Since I really only care about textual content, I decided to only export those columns that contain CellRendererText renderers.</p>
-<p>After working out the algorithm to fetch what needed to be exported I thought I was ready to roll. Turns out that the CSV pseudo-standard is pretty complex though (the RFC is <a href="http://www.rfc-editor.org/rfc/rfc4180.txt">here</a>), and I quickly got bogged down in writing all kinds of special cases for escaping, quoting, etc. Thankfully, someone else had already been down this road and I was able to find the excellent <a href="http://kbcsv.codeplex.com/">KBCsv</a> library which will write and read formatted CSV files. My only complaint was that it used another utility library purely for convenience in exception generation and null checking (I already use a ton of libraries in our application and I'd prefer not to add any unnecessarily). I replaced the calls to the utility library with the language equivalents, but that's totally a personal preference.</p>
-<p>Without further adieu, I present the <code>TreeViewHelper.ExportToCsv</code> and <code>TreeViewHelper.ExportToCsvFile</code> methods...</p>
-<pre class="prettyprint">using System;
-using System.Collections.Generic;
-using System.IO;
-using Gtk;
-using Kent.Boogaart.KBCsv;
-
-namespace DaveAGlick
+ <div id="post-content" class="col-sm-12"><p><a href="http://wyam.io">I recently</a> had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the <a href="http://owin.org/">OWIN specification</a> and related projects. Specifically, the <a href="http://katanaproject.codeplex.com/documentation">Katana project</a> from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.</p>
+<p>There is lots of great documentation and many blog posts about what OWIN is and how it works so I won't go into detail here. In a nutshell, OWIN provides a standard interface to hook into the web serving pipeline and do whatever you need to do to the request and/or response. The idea is that you can easily change the behavior of your web host (be it embedded, on a server, etc.) by swapping out different &quot;middleware&quot;.</p>
+<p>For Wyam, I wanted the embedded server to handle extensionless URLs. An extensionless URL is one in which the web server infers the file extension based on what files are available without having to specify it directly in the URL. For example, if there is a file named <code>mypage.html</code> you could access it at <code>http://mydomain.com/mypage</code> instead of <code>http://mydomain.com/mypage.html</code>. These extensionless URLs are easier to remember, are favored by search engines, and allow for easier migration to other technologies. Several web hosts support this concept (including GitHub Pages) and if someone is deploying to those hosts (or configured their own server to be extensionless), I wanted the Wyam preview server to support it.</p>
+<p>Unfortunatly, Katana (and OWIN) doesn't support this idea out of the box. I also searched for custom middleware to do this and came up empty. Time to learn how to write OWIN middleware...</p>
+<p>It was remarkably easy. I copied the conventions for some of the default middleware in Katana and just changed the behavior a little bit. I'll start with the options class:</p>
+<pre class="prettyprint"><code>public class ExtensionlessUrlsOptions
 {
- public static class TreeViewHelper
- {
-  public static bool ExportToCsv(TreeView treeView, Window parent)
-  {
-   FileChooserDialog fcd = new FileChooserDialog("Export File", parent, FileChooserAction.Save,
-   "Cancel", ResponseType.Cancel, "Export", ResponseType.Accept);
-   fcd.DoOverwriteConfirmation = true;
-   FileFilter filter = new FileFilter { Name = "CSV File" };
-   filter.AddPattern("*.csv");
-   fcd.AddFilter(filter);
-   if (fcd.Run() == (int)ResponseType.Accept)
-   {
-    string path = fcd.Filename;
-    fcd.Destroy();
-    return ExportToCsvFile(treeView, path);
-   }
-   fcd.Destroy();
-   return false;
-  }
+    public ExtensionlessUrlsOptions()
+    {
+        // Prioritized list
+        DefaultExtensions = new List&lt;string&gt;()
+        {
+            &quot;.htm&quot;,
+            &quot;.html&quot;
+        };
+    }
 
-  public static bool ExportToCsvFile(TreeView treeView, string path)
-  {
-   //Get the iterator
-   TreeIter iter;
-   if (treeView.Model.GetIterFirst(out iter))
-   {
-    //Create the stream
-    using (StreamWriter streamWriter = new StreamWriter(path, false))
-    {
-     //Create the CSV writer
-     using (CsvWriter csvWriter = new CsvWriter(streamWriter))
-     {
-      List&lt;string&gt; headers = new List&lt;string&gt;();
-      List&lt;string&gt; values = new List&lt;string&gt;();
-
-      //Traverse the tree
-      do
-      {
-       values.Clear();
-       foreach (TreeViewColumn column in treeView.Columns)
-       {
-        //Only output visible columns
-        if (column.Visible)
-        {
-         //Loop through CellRenderers to make sure we have a CellRendererText
-         string value = null;
-         column.CellSetCellData(treeView.Model, iter, false, false);
-         foreach (CellRenderer renderer in column.CellRenderers)
-         {
-          CellRendererText text = renderer as CellRendererText;
-          if (text != null)
-          {
-           //Setting value indicates this column had a CellRendererText and should be included
-           if (value == null)
-           {
-            value = String.Empty;
-           }
-
-           //Add the header if the first time through
-           if (headers != null)
-           {
-            headers.Add(column.Title);
-           }
-
-           //Append to the value
-           if (text.Text != null)
-           {
-            value += text.Text;
-           }
-          }
-         }
-         if (value != null)
-         {
-          values.Add(value);
-         }
-        }
-       }
-
-       //Output the header
-       if (headers != null)
-       {
-        csvWriter.WriteHeaderRecord(headers.ToArray());
-        headers = null;
-       }
-
-       //Output the values
-       csvWriter.WriteDataRecord(values.ToArray());
-      } while (treeView.Model.IterNext(ref iter));
-     }
-    }
-    return true;
-   }
-   return false;
-  }
- }
+    public IList&lt;string&gt; DefaultExtensions { get; set; }
+    public IFileSystem FileSystem { get; set; }
 }
-</pre>
+</code></pre>
+<p>This just holds the list of default extensions to check and the OWIN <code>IFileSystem</code> object that will be used to check for files.</p>
+<p>The actual middleware class is below:</p>
+<pre class="prettyprint"><code>using AppFunc = Func&lt;IDictionary&lt;string, object&gt;, Task&gt;;
+
+public class ExtensionlessUrlsMiddleware
+{
+    private readonly ExtensionlessUrlsOptions _options;
+    private readonly AppFunc _next;
+
+    public ExtensionlessUrlsMiddleware(AppFunc next, ExtensionlessUrlsOptions options)
+    {
+        if (next == null)
+        {
+            throw new ArgumentNullException(&quot;next&quot;);
+        }
+        if (options == null)
+        {
+            throw new ArgumentNullException(&quot;options&quot;);
+        }
+        if (options.FileSystem == null)
+        {
+            options.FileSystem = new PhysicalFileSystem(&quot;.&quot;);
+        }
+        options.DefaultExtensions =
+            options.DefaultExtensions.Select(x =&gt; x.StartsWith(&quot;.&quot;) ? x : (&quot;.&quot; + x)).ToList();
+
+        _next = next;
+        _options = options;
+    }
+
+    public Task Invoke(IDictionary&lt;string, object&gt; environment)
+    {
+        IOwinContext context = new OwinContext(environment);
+        if (IsGetOrHeadMethod(context.Request.Method)
+            &amp;&amp; !PathEndsInSlash(context.Request.Path))
+        {
+            // Check if there's a file with the matched extension, and rewrite the request if found
+            foreach (string extension in _options.DefaultExtensions)
+            {
+                string filePath = context.Request.Path + extension;
+                IFileInfo fileInfo;
+                if (_options.FileSystem.TryGetFileInfo(filePath, out fileInfo))
+                {
+                    context.Request.Path = new PathString(filePath);
+                    break;
+                }
+            }
+        }
+
+        return _next(environment);
+    }
+
+    // These methods are from Microsoft.Owin.StaticFiles.Helpers
+    private static bool IsGetOrHeadMethod(string method)
+    {
+        return IsGetMethod(method) || IsHeadMethod(method);
+    }
+
+    private static bool IsGetMethod(string method)
+    {
+        return string.Equals(&quot;GET&quot;, method, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsHeadMethod(string method)
+    {
+        return string.Equals(&quot;HEAD&quot;, method, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool PathEndsInSlash(PathString path)
+    {
+        return path.Value.EndsWith(&quot;/&quot;, StringComparison.Ordinal);
+    }
+}
+</code></pre>
+<p>You can see that besides some housekeeping code, it's very straightforward. Literally all we're doing is checking if a file exists with one of our default extensions and then rewritting the query to include the extension if a file does exist. That way, downstream middleware will just see the request with the extension and it'll work as if the extension were there all along.</p>
+<p>To actually use the middleware, I wrote some short extensions:</p>
+<pre class="prettyprint"><code>public static class ExtensionlessUrlsExtensions
+{
+    public static IAppBuilder UseExtensionlessUrls(this IAppBuilder builder)
+    {
+        return builder.UseExtensionlessUrls(new ExtensionlessUrlsOptions());
+    }
+
+    public static IAppBuilder UseExtensionlessUrls(this IAppBuilder builder, ExtensionlessUrlsOptions options)
+    {
+        if (builder == null)
+        {
+            throw new ArgumentNullException(&quot;builder&quot;);
+        }
+
+        return builder.Use&lt;ExtensionlessUrlsMiddleware&gt;(options);
+    }
+}
+</code></pre>
+<p>And then placed this code where I spin up the server:</p>
+<pre class="prettyprint"><code>WebApp.Start(options, app =&gt;
+{
+    IFileSystem outputFolder = new PhysicalFileSystem(/* output folder */);
+
+    // ...
+    
+    app.UseExtensionlessUrls(new ExtensionlessUrlsOptions
+    {
+        FileSystem = outputFolder
+    });
+    
+    // ...
+});
+</code></pre>
 
 </div>
 </div>
@@ -245,9 +261,9 @@ namespace DaveAGlick
         <script type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
             var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
-            var disqus_identifier = 'exporting-a-gtksharp-treeview-to-csv';
-            var disqus_title = 'Exporting a GtkSharp TreeView to CSV';
-            var disqus_url = 'http://www.daveaglick.com/posts/exporting-a-gtksharp-treeview-to-csv';
+            var disqus_identifier = 'serving-extensionless-urls-with-owin';
+            var disqus_title = 'Serving Extensionless URLs with OWIN';
+            var disqus_url = 'http://www.daveaglick.com/posts/serving-extensionless-urls-with-owin';
 
             /* * * DON'T EDIT BELOW THIS LINE * * */
             (function() {
