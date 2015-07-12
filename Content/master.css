@@ -191,11 +191,11 @@ strong {
   color: #777777;
 }
 .label-comments a {
-  color: #777777;
+  color: #777777 !important;
 }
 .label-comments a:hover,
 .label-comments a:focus {
-  color: #777777;
+  color: #777777 !important;
 }
 .label-comments::before {
   margin-right: 6px;
