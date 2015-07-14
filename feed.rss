@@ -1,5 +1,44 @@
 
-<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/serving-extensionless-urls-with-owin</guid><link>http://daveaglick.com/posts/serving-extensionless-urls-with-owin</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Serving Extensionless URLs with OWIN - My first OWIN middleware.</title><description>&lt;p&gt;&lt;a href="http://wyam.io"&gt;I recently&lt;/a&gt; had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the &lt;a href="http://owin.org/"&gt;OWIN specification&lt;/a&gt; and related projects. Specifically, the &lt;a href="http://katanaproject.codeplex.com/documentation"&gt;Katana project&lt;/a&gt; from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.&lt;/p&gt;
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler</guid><link>http://daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</title><description>&lt;p&gt;I've been playing around with &lt;a href="http://serilog.net/"&gt;Serilog&lt;/a&gt; and have been really, really impressed. If you're not familiar with it, Serilog provides a very nice logging API with the ability to log entire object graphs in addition to flag messages. It's also really extensible and has a lot of community support.&lt;/p&gt;
+&lt;p&gt;It was very easy to integrate Serilog into my ASP.NET MVC application with &lt;a href="https://github.com/serilog-web/classic"&gt;SerilogWeb.Classic&lt;/a&gt;, but I found myself wanting a little more information. Specifically, I would love to get a log of performance metrics and database queries (I use Entity Framework) that could be correlated with my other logging information. I could always set up timers on the request and hook into the Entity Framework pipeline for this, but I've already spent the time to instrument my important code with &lt;a href="http://miniprofiler.com/"&gt;MiniProfiler&lt;/a&gt;. What I really wanted was a way to take the information I get from MiniProfiler and write it to Serilog.&lt;/p&gt;
+&lt;p&gt;It turns out that with a little digging, this is pretty easy. First, we'll need a way to get the data out of MiniProfiler. The best I could find is to call &lt;code&gt;MiniProfiler.ToJson()&lt;/code&gt; after calling &lt;code&gt;MiniProfiler.Stop()&lt;/code&gt;. This outputs a JSON string with the complete set of MiniProfiler data including all subtimings and database queries (which you get if you're using one of the MiniProfiler Entity Framework extensions like &lt;a href="https://www.nuget.org/packages/MiniProfiler.EF6/"&gt;MiniProfiler.EF6&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Since JSON is structured and Serilog likes structured data, the next question was how to get this data into Serilog in a format that maintains the structure? Thankfully someone has already written a Serilog extension to do exactly that. &lt;a href="https://github.com/destructurama/json-net"&gt;Destructurama.JsonNet&lt;/a&gt; adds destructuring support for JSON.NET dynamic objects to Serilog. Using this extension, we can easily convert the MiniProfiler JSON string to a JSON.NET object and then feed it into Serilog.&lt;/p&gt;
+&lt;p&gt;The final code looks like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public class MvcApplication : System.Web.HttpApplication
+{
+    protected void Application_Start()
+    {
+        Log.Logger = new LoggerConfiguration()
+            .Destructure.JsonNetTypes()
+            // ...
+        
+        // ...
+    }
+    
+    protected void Application_BeginRequest()
+    {
+        MiniProfiler.Start();
+        // ...
+    }
+    
+    protected void Application_EndRequest()
+    {
+        MiniProfiler.Stop();
+        if (MiniProfiler.Current != null &amp;amp;&amp;amp; MiniProfiler.Current.Root != null)
+        {
+            Log
+                .ForContext("MiniProfiler", JsonConvert.DeserializeObject&amp;lt;dynamic&amp;gt;(MiniProfiler.ToJson()))
+                .Verbose("Completed request in {Timing} ms", MiniProfiler.Current.Root.DurationMilliseconds);
+        }
+        // ...
+    }
+    
+    // ...
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+</description><pubDate>Mon, 13 Jul 2015 00:00:00 Z</pubDate><a10:updated>2015-07-13T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/serving-extensionless-urls-with-owin</guid><link>http://daveaglick.com/posts/serving-extensionless-urls-with-owin</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Serving Extensionless URLs with OWIN - My first OWIN middleware.</title><description>&lt;p&gt;&lt;a href="http://wyam.io"&gt;I recently&lt;/a&gt; had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the &lt;a href="http://owin.org/"&gt;OWIN specification&lt;/a&gt; and related projects. Specifically, the &lt;a href="http://katanaproject.codeplex.com/documentation"&gt;Katana project&lt;/a&gt; from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.&lt;/p&gt;
 &lt;p&gt;There is lots of great documentation and many blog posts about what OWIN is and how it works so I won't go into detail here. In a nutshell, OWIN provides a standard interface to hook into the web serving pipeline and do whatever you need to do to the request and/or response. The idea is that you can easily change the behavior of your web host (be it embedded, on a server, etc.) by swapping out different "middleware".&lt;/p&gt;
 &lt;p&gt;For Wyam, I wanted the embedded server to handle extensionless URLs. An extensionless URL is one in which the web server infers the file extension based on what files are available without having to specify it directly in the URL. For example, if there is a file named &lt;code&gt;mypage.html&lt;/code&gt; you could access it at &lt;code&gt;http://mydomain.com/mypage&lt;/code&gt; instead of &lt;code&gt;http://mydomain.com/mypage.html&lt;/code&gt;. These extensionless URLs are easier to remember, are favored by search engines, and allow for easier migration to other technologies. Several web hosts support this concept (including GitHub Pages) and if someone is deploying to those hosts (or configured their own server to be extensionless), I wanted the Wyam preview server to support it.&lt;/p&gt;
 &lt;p&gt;Unfortunatly, Katana (and OWIN) doesn't support this idea out of the box. I also searched for custom middleware to do this and came up empty. Time to learn how to write OWIN middleware...&lt;/p&gt;
@@ -619,59 +658,4 @@ Console.Write(value);  // 25&lt;/pre&gt;
 
 &lt;p&gt;Because the &lt;code&gt;SetNumberOfTires()&lt;/code&gt; extension method is still in the &lt;code&gt;MyLibrary&lt;/code&gt; project, it has access to the &lt;code&gt;internal&lt;/code&gt; &lt;code&gt;NumberOfTires&lt;/code&gt; setter. In essence, the extension method is proxying the &lt;code&gt;internal&lt;/code&gt; property and making it &lt;code&gt;public&lt;/code&gt;. All an extension library has to do in order to use it is to add &lt;code&gt;using MyLibrary.Internal;&lt;/code&gt; to any code that needs access.&lt;/p&gt;
 
-&lt;p&gt;There are a couple drawbacks to this approach. The first is that by exposing &lt;code&gt;internal&lt;/code&gt; code through &lt;code&gt;public&lt;/code&gt; extension methods, those bits aren't actually hidden from outside use anymore. While segregating the extensions into a special namespace makes sure they won't pollute the public API, this strategy shouldn't be used if you truly want those properties or methods to remain unavailable to outside code. Another drawback is that the API used to access the &lt;code&gt;internal&lt;/code&gt; code doesn't directly match the &lt;code&gt;internal&lt;/code&gt; code. For example, you'll end up with a lot of &lt;code&gt;.GetXyz()&lt;/code&gt; and &lt;code&gt;.SetXyz()&lt;/code&gt; extensions since you can't create extension properties. Also, you obviously can't expose entire classes this way (though I suppose you could put interfaces or proxy classes in the internal namespace for this purpose). Finally, it requires duplicating portions of your code. For every &lt;code&gt;internal&lt;/code&gt; property or method you want to expose, you also have to write and maintain a matching extension method. However, if you can live with these limitations and feel that a clean API for different sets of consumers is more important than the maintenance burden, this might just do the trick.&lt;/p&gt;</description><pubDate>Thu, 22 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-22T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/debugging-stack-overflows-on-iis</guid><link>http://daveaglick.com/posts/debugging-stack-overflows-on-iis</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Debugging Stack Overflows on IIS - 1990 called and they want their debugger back.</title><description>
-&lt;p&gt;I recently had a problem with an ASP.NET application on IIS where IIS would kill my Application Pool process whenever a specific query was executed. There was no warning and while I could see the process disappear from my logging tool in real-time, I didn't get any error messages or exceptions. Thus began an epic adventure of debugging rules, crash dumps, and WinDbg. It's worth noting that I really have no idea what I'm doing here. Like most modern .NET developers I gave up this sort of thing years ago in favor of the debugging available through Visual Studio and other modern tools. However, it turns out that the only way to get detailed information in cases where IIS kills your process is to do it the hard way. There's probably also multiple hard ways to do it - this is just the one that worked well for me. Hopefully this saves you some time should you ever need to follow me down the rabbit hole.&lt;/p&gt;
-
-
-&lt;h2&gt;Check The Event Logs&lt;/h2&gt;
-
-&lt;p&gt;Before you start the process of getting crash dumps, etc. it might be helpful to check out the Windows Event Log. This should give you some small indication of what's going on, or at least give you something to Google. In my case I didn't have anything in the Application log, but in the System log I found an Information message with a source of Application Popup every time my process got killed:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;Application popup: w3wp.exe - System Error : A new guard page for the stack cannot be created.&lt;/pre&gt;
-
-&lt;p&gt;I also had a Warning from the source WAS:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;A process serving application pool 'MyAppPool' suffered a fatal communication error with the Windows Process Activation Service. The process id was '5288'. The data field contains the error number.&lt;/pre&gt;
-
-&lt;p&gt;These two messages gave me enough for a search and pointed me in the right direction. In this case all signs pointed to a stack overflow, but your specific Event Log messages might indicate something different.&lt;/p&gt;
-
-
-&lt;h2&gt;Enable Debugging Rules&lt;/h2&gt;
-
-&lt;p&gt;The next step is to enable debugging rules to generate crash dumps. You'll need the Debug Diagnostic Tool for this part, which &lt;a href="http://www.microsoft.com/en-us/download/details.aspx?id=42933"&gt;can be obtained here&lt;/a&gt;. Once you've installed it, you'll need to restart IIS with a &lt;code&gt;iisreset&lt;/code&gt; command from the command prompt. Then launch the Debug Diagnostic Tool and walk through the wizard for setting up debugging rules. This essentially creates watchers for various events and then takes various actions (such as dumping logs) when they occur. Specifically you want to create a crash rule:&lt;/p&gt;
-
-
-&lt;img src="/Content/posts/debug-diagnostic-1.png" class="img-responsive"&gt;
-
-&lt;img src="/Content/posts/debug-diagnostic-2.png" class="img-responsive"&gt;
-
-&lt;p&gt;Then when you get to the Advanced Configuration page, click on Exceptions and then Add Exception. This will let you select from a list of exceptions including Stack Overflow. Also make sure to change the Action Type to Full Userdump:&lt;/p&gt;
-
-
-&lt;img src="/Content/posts/debug-diagnostic-3.png" class="img-responsive"&gt;
-
-&lt;p&gt;Finally, select a location for the log files. Make sure it's got plenty of space because the files can get pretty big.&lt;/p&gt;
-
-
-&lt;h2&gt;Open The Dump In WinDbg&lt;/h2&gt;
-
-&lt;p&gt;Now run your application until it crashes. You should get some large &lt;code&gt;.dmp&lt;/code&gt; files in the folder you selected during the wizard. For the next part you'll need to obtain WinDbg. It's important to get the version that matches the build profile of your application, not your system. So if your ASP.NET application is built for x86, you should get the x86 WinDbg tool even if your server is x64. The raw installers can be obtained &lt;a href="http://rxwen-blog-stuff.googlecode.com/files/windbg_6.12.0002.633_x86.zip"&gt;here for x86&lt;/a&gt; and &lt;a href="http://rxwen-blog-stuff.googlecode.com/files/windbg_6.12.0002.633_64_installer.zip"&gt;here for x64&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Once you install WinDbg, open it up and select Open Crash Dump from the File menu. Then you'll need to type the following two commands into the crash dump window:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;.loadby sos clr
-!clrstack&lt;/pre&gt;
-
-&lt;p&gt;If everything goes well, this should print out the full stack when the process crashed (it might take a while). That should get you on your way to debugging what went wrong.&lt;/p&gt;
-
-
-&lt;h2&gt;Additional Resources&lt;/h2&gt;
-
-&lt;p&gt;In the course of trying to figure all of this out I came across some valuable resources:&lt;/p&gt;
-
-&lt;ul class="p"&gt;
-    &lt;li&gt;&lt;a href="http://stackoverflow.com/questions/5053708/how-to-debug-w3wp-exe-process-was-terminated-due-to-a-stack-overflow-works-on"&gt;This Stack Overflow question&lt;/a&gt; got the ball rolling.&lt;/li&gt;
-    &lt;li&gt;&lt;a href="http://blog.whitesites.com/Debugging-Faulting-Application-w3wp-exe-Crashes__634424707278896484_blog.htm"&gt;This blog post&lt;/a&gt; gives some good information about what to do once you get the crash dump loaded in WinDbg.&lt;/li&gt;
-    &lt;li&gt;&lt;a href="https://support.microsoft.com/kb/919789?wa=wsignin1.0"&gt;This Microsoft support page&lt;/a&gt; has some step-by-step instructions for configuring Debug Diagnostic Tool in different environments.&lt;/li&gt;
-    &lt;li&gt;&lt;a href="http://geekswithblogs.net/.NETonMyMind/archive/2006/03/14/72262.aspx"&gt;This blog post&lt;/a&gt; has a good reference on the commands that are available in WinDbg.&lt;/li&gt;
-&lt;/ul&gt;</description><pubDate>Tue, 13 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-13T00:00:00Z</a10:updated></item></channel></rss>
+&lt;p&gt;There are a couple drawbacks to this approach. The first is that by exposing &lt;code&gt;internal&lt;/code&gt; code through &lt;code&gt;public&lt;/code&gt; extension methods, those bits aren't actually hidden from outside use anymore. While segregating the extensions into a special namespace makes sure they won't pollute the public API, this strategy shouldn't be used if you truly want those properties or methods to remain unavailable to outside code. Another drawback is that the API used to access the &lt;code&gt;internal&lt;/code&gt; code doesn't directly match the &lt;code&gt;internal&lt;/code&gt; code. For example, you'll end up with a lot of &lt;code&gt;.GetXyz()&lt;/code&gt; and &lt;code&gt;.SetXyz()&lt;/code&gt; extensions since you can't create extension properties. Also, you obviously can't expose entire classes this way (though I suppose you could put interfaces or proxy classes in the internal namespace for this purpose). Finally, it requires duplicating portions of your code. For every &lt;code&gt;internal&lt;/code&gt; property or method you want to expose, you also have to write and maintain a matching extension method. However, if you can live with these limitations and feel that a clean API for different sets of consumers is more important than the maintenance burden, this might just do the trick.&lt;/p&gt;</description><pubDate>Thu, 22 Jan 2015 00:00:00 Z</pubDate><a10:updated>2015-01-22T00:00:00Z</a10:updated></item></channel></rss>

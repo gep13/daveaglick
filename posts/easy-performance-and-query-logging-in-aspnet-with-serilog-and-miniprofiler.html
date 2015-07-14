@@ -7,7 +7,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
-	<title>Dave Glick</title>
+	<title>Dave Glick - Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</title>
         <meta name="description" content="The personal blog of Dave Glick" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
 
@@ -27,10 +27,10 @@
         <meta name="msapplication-tooltip" content="Dave Glick" />
         <meta name="msapplication-starturl" content="/" />
 
-        <meta property="og:title" content="Dave Glick" />
+        <meta property="og:title" content="Dave Glick - Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler" />
         
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="http://daveaglick.com/index" />
+        <meta property="og:url" content="http://daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler" />
         <!-- TODO: More social graph meta tags -->
 
         <script src="/Scripts/jquery-2.1.1.min.js"></script>
@@ -93,87 +93,99 @@
   <div class="row">
    <div class="col-md-12">
 
-<div class="row banner">
- <div class="col-md-12">        <div class="hello">Hello.</div>
-        <div class="intro">My name is Dave Glick. By day, I'm a .NET and open source enthusiast. By night, I'm a husband and father. Somewhere in between the two I write stuff here.</div>
-</div>
-</div><hr />
 
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/asp.net" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET</a>
+     <a role="button" href="/tags/asp.net-mvc" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET MVC</a>
+     <a role="button" href="/tags/logging" class="btn btn-default btn-sm tag-button icon-tag-2"> logging</a>
+     <a role="button" href="/tags/miniprofiler" class="btn btn-default btn-sm tag-button icon-tag-2"> MiniProfiler</a>
+     <a role="button" href="/tags/serilog" class="btn btn-default btn-sm tag-button icon-tag-2"> Serilog</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Monday, July 13, 2015</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler" data-via="daveaglick" data-text="Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
 
 <div class="row">
- <div class="col-sm-8 right-border">            <div>
-                <h3>
-                    <a href="/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler">Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</a>
-                    <small>
-  <span class="label label-default label-date icon-calendar">7/13/2015</span></small>
-                    <small>
+ <div id="post-content" class="col-sm-12"><p>I've been playing around with <a href="http://serilog.net/">Serilog</a> and have been really, really impressed. If you're not familiar with it, Serilog provides a very nice logging API with the ability to log entire object graphs in addition to flag messages. It's also really extensible and has a lot of community support.</p>
+<p>It was very easy to integrate Serilog into my ASP.NET MVC application with <a href="https://github.com/serilog-web/classic">SerilogWeb.Classic</a>, but I found myself wanting a little more information. Specifically, I would love to get a log of performance metrics and database queries (I use Entity Framework) that could be correlated with my other logging information. I could always set up timers on the request and hook into the Entity Framework pipeline for this, but I've already spent the time to instrument my important code with <a href="http://miniprofiler.com/">MiniProfiler</a>. What I really wanted was a way to take the information I get from MiniProfiler and write it to Serilog.</p>
+<p>It turns out that with a little digging, this is pretty easy. First, we'll need a way to get the data out of MiniProfiler. The best I could find is to call <code>MiniProfiler.ToJson()</code> after calling <code>MiniProfiler.Stop()</code>. This outputs a JSON string with the complete set of MiniProfiler data including all subtimings and database queries (which you get if you're using one of the MiniProfiler Entity Framework extensions like <a href="https://www.nuget.org/packages/MiniProfiler.EF6/">MiniProfiler.EF6</a>).</p>
+<p>Since JSON is structured and Serilog likes structured data, the next question was how to get this data into Serilog in a format that maintains the structure? Thankfully someone has already written a Serilog extension to do exactly that. <a href="https://github.com/destructurama/json-net">Destructurama.JsonNet</a> adds destructuring support for JSON.NET dynamic objects to Serilog. Using this extension, we can easily convert the MiniProfiler JSON string to a JSON.NET object and then feed it into Serilog.</p>
+<p>The final code looks like this:</p>
+<pre class="prettyprint"><code>public class MvcApplication : System.Web.HttpApplication
+{
+    protected void Application_Start()
+    {
+        Log.Logger = new LoggerConfiguration()
+            .Destructure.JsonNetTypes()
+            // ...
+        
+        // ...
+    }
+    
+    protected void Application_BeginRequest()
+    {
+        MiniProfiler.Start();
+        // ...
+    }
+    
+    protected void Application_EndRequest()
+    {
+        MiniProfiler.Stop();
+        if (MiniProfiler.Current != null &amp;&amp; MiniProfiler.Current.Root != null)
+        {
+            Log
+                .ForContext(&quot;MiniProfiler&quot;, JsonConvert.DeserializeObject&lt;dynamic&gt;(MiniProfiler.ToJson()))
+                .Verbose(&quot;Completed request in {Timing} ms&quot;, MiniProfiler.Current.Root.DurationMilliseconds);
+        }
+        // ...
+    }
+    
+    // ...
+}
 
-  <span class="label label-default label-comments icon-talk-chat-2">                            <a href="/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler#disqus_thread" data-disqus-identifier="easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler"></a>
-</span>                    </small>
-                </h3>
-            </div>
-<p>I've been playing around with <a href="http://serilog.net/">Serilog</a> and have been really, really impressed. If you're not familiar with it, Serilog provides a very nice logging API with the ability to log entire object graphs in addition to flag messages. It's also really extensible and has a lot of community support.</p>
-  <a role="button" href="/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler" class="btn btn-default">Read More &rarr;</a>                <hr /> 
-            <div>
-                <h3>
-                    <a href="/posts/serving-extensionless-urls-with-owin">Serving Extensionless URLs with OWIN</a>
-                    <small>
-  <span class="label label-default label-date icon-calendar">7/8/2015</span></small>
-                    <small>
+</code></pre>
 
-  <span class="label label-default label-comments icon-talk-chat-2">                            <a href="/posts/serving-extensionless-urls-with-owin#disqus_thread" data-disqus-identifier="serving-extensionless-urls-with-owin"></a>
-</span>                    </small>
-                </h3>
-            </div>
+</div>
+</div>
+<hr />
 
-  <p class="lead">My first OWIN middleware.</p><p><a href="http://wyam.io">I recently</a> had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the <a href="http://owin.org/">OWIN specification</a> and related projects. Specifically, the <a href="http://katanaproject.codeplex.com/documentation">Katana project</a> from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.</p>
-  <a role="button" href="/posts/serving-extensionless-urls-with-owin" class="btn btn-default">Read More &rarr;</a>                <hr /> 
-            <div>
-                <h3>
-                    <a href="/posts/converting-my-blog-to-wyam">Converting My Blog to Wyam</a>
-                    <small>
-  <span class="label label-default label-date icon-calendar">7/7/2015</span></small>
-                    <small>
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler';
+            var disqus_title = 'Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler';
+            var disqus_url = 'http://www.daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler';
 
-  <span class="label label-default label-comments icon-talk-chat-2">                            <a href="/posts/converting-my-blog-to-wyam#disqus_thread" data-disqus-identifier="converting-my-blog-to-wyam"></a>
-</span>                    </small>
-                </h3>
-            </div>
-
-  <p class="lead">How I went from compiled to static in less than a day.</p><p>I <a href="/posts/announcing-wyam">recently launched a new static site generator</a>, and I figured what better test of whether it's ready for widespread use than to convert my entire blog to use it. Given that this blog was originally built with ASP.NET MVC, it should be a good fit for converting over to a Razor-based static site generator. The process was actually  easier than I thought it would be and suggests that <a href="http://wyam.io">Wyam</a> is already ready for production use on personal sites, blogs, etc.</p>
-  <a role="button" href="/posts/converting-my-blog-to-wyam" class="btn btn-default">Read More &rarr;</a>        <hr />
-        <div><strong><a href="/posts"> Archive</a></strong></div>
-
- </div>
- <div class="col-sm-4">        <hr class="visible-xs-block" />
-        <h5>Tags</h5>
-        <div>
-            
-
-  <a role="button" href="/tags/asp.net" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET <span class='badge'>11</span></a>
-  <a role="button" href="/tags/asp.net-mvc" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET MVC <span class='badge'>10</span></a>
-  <a role="button" href="/tags/programming" class="btn btn-default btn-sm tag-button icon-tag-2"> programming <span class='badge'>6</span></a>
-  <a role="button" href="/tags/open-source" class="btn btn-default btn-sm tag-button icon-tag-2"> open source <span class='badge'>5</span></a>
-  <a role="button" href="/tags/roslyn" class="btn btn-default btn-sm tag-button icon-tag-2"> Roslyn <span class='badge'>4</span></a>
-  <a role="button" href="/tags/net-compiler-platform" class="btn btn-default btn-sm tag-button icon-tag-2"> .NET Compiler Platform <span class='badge'>4</span></a>
-  <a role="button" href="/tags/kendoui" class="btn btn-default btn-sm tag-button icon-tag-2"> KendoUI <span class='badge'>4</span></a>
-  <a role="button" href="/tags/kendoui-mvc" class="btn btn-default btn-sm tag-button icon-tag-2"> KendoUI MVC <span class='badge'>4</span></a>
-  <a role="button" href="/tags/grid" class="btn btn-default btn-sm tag-button icon-tag-2"> grid <span class='badge'>4</span></a>
-  <a role="button" href="/tags/static-site-generator" class="btn btn-default btn-sm tag-button icon-tag-2"> static site generator <span class='badge'>3</span></a>        </div>
-        <div><strong><a href="/tags">View All Tags</a></strong></div>
-        <hr />
-        <h5>On The Interwebs</h5>
-
-
-  <ul class="list-unstyled">
-   <li><a href="https://twitter.com/daveaglick" class="icon-twitter"> Twitter (daveaglick)</a></li>
-   <li><a href="https://github.com/daveaglick" class="icon-github-square"> GitHub (daveaglick)</a></li>
-   <li><a href="http://stackoverflow.com/users/807064/daveaglick" class="icon-stackoverflow"> Stack Overflow (daveaglick)</a></li>
-   <li><a href="http://www.linkedin.com/pub/dave-glick/a/871/424/" class="icon-linkedin-square"> LinkedIn</a></li>
-   <li><a href="http://flickr.com/photos/somedave/" class="icon-flickr-1"> Flickr (somedave)</a></li>
-   <li><a href="http://www.goodreads.com/daveaglick" class="icon-goodreads"> Goodreads (daveaglick)</a></li>
-  </ul>
- </div>
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
 </div></div>
   </div>
  </div>
