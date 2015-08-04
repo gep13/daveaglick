@@ -1,0 +1,702 @@
+
+<feed xml:base="http://daveaglick.com/" xmlns="http://www.w3.org/2005/Atom"><title type="text">Dave Glick</title><subtitle type="text">Latest blog posts by Dave Glick</subtitle><id>uuid:9ecae4fb-8f42-4405-bddf-8de4b0848816;id=1</id><updated>2015-08-04T14:59:53Z</updated><link href="http://daveaglick.com/" /><entry><id>http://daveaglick.com/posts/streaming-linq-based-text-search-and-replace</id><title type="text">Streaming LINQ-Based Text Search and Replace</title><published>2015-08-04T00:00:00Z</published><updated>2015-08-04T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/streaming-linq-based-text-search-and-replace" /><content type="text">&lt;p&gt;I was recently thinking about streaming operations and got to wondering about string operations on streaming data. Specifically, how would you perform a text search and replace on a string if you could only stream the string one character at a time? This could have real-world application in asynchronous systems where you get a string a character at a time, or in memory-intensive scenarios where you can't load the source string into memory at once. For the most part though, this was just a thought exercise. I structured the code as a LINQ-like extension method, though obviously the same approach could be used with streams.&lt;/p&gt;
+&lt;p&gt;Here's what I came up with:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public static IEnumerable&amp;lt;char&amp;gt; Replace(this IEnumerable&amp;lt;char&amp;gt; source, string search, string replace)
+{
+    // Iterate the source characters
+    int match = 0;
+    foreach(char c in source)
+    {
+        if(match == search.Length)
+        {
+            // Found a match, replace it with replace
+            foreach(char r in replace)
+            {
+                yield return r;
+            }
+            match = 0;
+        }
+        
+        if(c == search[match])
+        {
+            // Potentially a match
+            match++;
+        }
+        else
+        {
+            // Not a match, output candidate match up to this point
+            if(match &amp;gt; 0)
+            {
+                for(int m = 0 ; m &amp;lt; match ; m++)
+                {
+                    yield return search[m];
+                }
+                match = 0;
+            }
+            
+            // And output non-matched char
+            yield return c;
+        }
+    }
+    
+    // Output any matches or partial matches at the end
+    if(match == search.Length)
+    {
+        foreach(char r in replace)
+        {
+            yield return r;
+        }
+    }
+    else if(match &amp;gt; 0)
+    {
+        for(int m = 0 ; m &amp;lt; match ; m++)
+        {
+            yield return search[m];
+        }           
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Usage:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;string source = @"Lorem ipsum dolor sit amet, consectetur adipiscing
+    elit, sed do eiusmod tempor incididunt ut labore et dolore magna 
+    aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
+    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure 
+    dolor in reprehenderit in voluptate velit esse cillum dolore eu 
+    fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, 
+    sunt in culpa qui officia deserunt mollit anim id est laborum.";
+string search = @"dolor";
+string replace = @"foorbar";
+string replaced = new string(source.Replace(search, replace).ToArray());
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Performance isn't terrible, but it's not too great either. In very rough benchmarking it's about an order of magnitude (and a little more) slower than a standard &lt;code&gt;string.Replace(...)&lt;/code&gt;. Of course, there are much faster string search algorithms that take advantage of being able to seek. You could also speed this up by buffering and then doing a &lt;code&gt;string.Replace(...)&lt;/code&gt; on each chunk (though you'd have to account for matches at the break points of the chunks). You could also easly genericize the algorithm to search and replace any sort of object in an &lt;code&gt;IEnumerable&amp;lt;T&amp;gt;&lt;/code&gt;, not just &lt;code&gt;char&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Please let me know in the comments if you have any other optimization ideas.&lt;/p&gt;
+
+</content></entry><entry><id>http://daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler</id><title type="text">Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</title><published>2015-07-13T00:00:00Z</published><updated>2015-07-13T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler" /><content type="text">&lt;p&gt;I've been playing around with &lt;a href="http://serilog.net/"&gt;Serilog&lt;/a&gt; and have been really, really impressed. If you're not familiar with it, Serilog provides a very nice logging API with the ability to log entire object graphs in addition to flag messages. It's also really extensible and has a lot of community support.&lt;/p&gt;
+&lt;p&gt;It was very easy to integrate Serilog into my ASP.NET MVC application with &lt;a href="https://github.com/serilog-web/classic"&gt;SerilogWeb.Classic&lt;/a&gt;, but I found myself wanting a little more information. Specifically, I would love to get a log of performance metrics and database queries (I use Entity Framework) that could be correlated with my other logging information. I could always set up timers on the request and hook into the Entity Framework pipeline for this, but I've already spent the time to instrument my important code with &lt;a href="http://miniprofiler.com/"&gt;MiniProfiler&lt;/a&gt;. What I really wanted was a way to take the information I get from MiniProfiler and write it to Serilog.&lt;/p&gt;
+&lt;p&gt;It turns out that with a little digging, this is pretty easy. First, we'll need a way to get the data out of MiniProfiler. The best I could find is to call &lt;code&gt;MiniProfiler.ToJson()&lt;/code&gt; after calling &lt;code&gt;MiniProfiler.Stop()&lt;/code&gt;. This outputs a JSON string with the complete set of MiniProfiler data including all subtimings and database queries (which you get if you're using one of the MiniProfiler Entity Framework extensions like &lt;a href="https://www.nuget.org/packages/MiniProfiler.EF6/"&gt;MiniProfiler.EF6&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Since JSON is structured and Serilog likes structured data, the next question was how to get this data into Serilog in a format that maintains the structure? Thankfully someone has already written a Serilog extension to do exactly that. &lt;a href="https://github.com/destructurama/json-net"&gt;Destructurama.JsonNet&lt;/a&gt; adds destructuring support for JSON.NET dynamic objects to Serilog. Using this extension, we can easily convert the MiniProfiler JSON string to a JSON.NET object and then feed it into Serilog.&lt;/p&gt;
+&lt;p&gt;The final code looks like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public class MvcApplication : System.Web.HttpApplication
+{
+    protected void Application_Start()
+    {
+        Log.Logger = new LoggerConfiguration()
+            .Destructure.JsonNetTypes()
+            // ...
+        
+        // ...
+    }
+    
+    protected void Application_BeginRequest()
+    {
+        MiniProfiler.Start();
+        // ...
+    }
+    
+    protected void Application_EndRequest()
+    {
+        MiniProfiler.Stop();
+        if (MiniProfiler.Current != null &amp;amp;&amp;amp; MiniProfiler.Current.Root != null)
+        {
+            Log
+                .ForContext("MiniProfiler", JsonConvert.DeserializeObject&amp;lt;dynamic&amp;gt;(MiniProfiler.ToJson()))
+                .Verbose("Completed request in {Timing} ms", MiniProfiler.Current.Root.DurationMilliseconds);
+        }
+        // ...
+    }
+    
+    // ...
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+</content></entry><entry><id>http://daveaglick.com/posts/serving-extensionless-urls-with-owin</id><title type="text">Serving Extensionless URLs with OWIN - My first OWIN middleware.</title><published>2015-07-08T00:00:00Z</published><updated>2015-07-08T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/serving-extensionless-urls-with-owin" /><content type="text">&lt;p&gt;&lt;a href="http://wyam.io"&gt;I recently&lt;/a&gt; had a need for an embedded web server. In the past, I've used a variety of libraries for this purpose (including building my own kind-of standards-compliant HTTP server - don't do this), but have always had my eye on the &lt;a href="http://owin.org/"&gt;OWIN specification&lt;/a&gt; and related projects. Specifically, the &lt;a href="http://katanaproject.codeplex.com/documentation"&gt;Katana project&lt;/a&gt; from Microsoft looked interesting. Each previous time I investigated it, it looked like it was still pretty rough and needed a little more time. I was pleased to find what looked like a mature and easy to integrate library this time around though.&lt;/p&gt;
+&lt;p&gt;There is lots of great documentation and many blog posts about what OWIN is and how it works so I won't go into detail here. In a nutshell, OWIN provides a standard interface to hook into the web serving pipeline and do whatever you need to do to the request and/or response. The idea is that you can easily change the behavior of your web host (be it embedded, on a server, etc.) by swapping out different "middleware".&lt;/p&gt;
+&lt;p&gt;For Wyam, I wanted the embedded server to handle extensionless URLs. An extensionless URL is one in which the web server infers the file extension based on what files are available without having to specify it directly in the URL. For example, if there is a file named &lt;code&gt;mypage.html&lt;/code&gt; you could access it at &lt;code&gt;http://mydomain.com/mypage&lt;/code&gt; instead of &lt;code&gt;http://mydomain.com/mypage.html&lt;/code&gt;. These extensionless URLs are easier to remember, are favored by search engines, and allow for easier migration to other technologies. Several web hosts support this concept (including GitHub Pages) and if someone is deploying to those hosts (or configured their own server to be extensionless), I wanted the Wyam preview server to support it.&lt;/p&gt;
+&lt;p&gt;Unfortunatly, Katana (and OWIN) doesn't support this idea out of the box. I also searched for custom middleware to do this and came up empty. Time to learn how to write OWIN middleware...&lt;/p&gt;
+&lt;p&gt;It was remarkably easy. I copied the conventions for some of the default middleware in Katana and just changed the behavior a little bit. I'll start with the options class:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public class ExtensionlessUrlsOptions
+{
+    public ExtensionlessUrlsOptions()
+    {
+        // Prioritized list
+        DefaultExtensions = new List&amp;lt;string&amp;gt;()
+        {
+            ".htm",
+            ".html"
+        };
+    }
+
+    public IList&amp;lt;string&amp;gt; DefaultExtensions { get; set; }
+    public IFileSystem FileSystem { get; set; }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This just holds the list of default extensions to check and the OWIN &lt;code&gt;IFileSystem&lt;/code&gt; object that will be used to check for files.&lt;/p&gt;
+&lt;p&gt;The actual middleware class is below:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;using AppFunc = Func&amp;lt;IDictionary&amp;lt;string, object&amp;gt;, Task&amp;gt;;
+
+public class ExtensionlessUrlsMiddleware
+{
+    private readonly ExtensionlessUrlsOptions _options;
+    private readonly AppFunc _next;
+
+    public ExtensionlessUrlsMiddleware(AppFunc next, ExtensionlessUrlsOptions options)
+    {
+        if (next == null)
+        {
+            throw new ArgumentNullException("next");
+        }
+        if (options == null)
+        {
+            throw new ArgumentNullException("options");
+        }
+        if (options.FileSystem == null)
+        {
+            options.FileSystem = new PhysicalFileSystem(".");
+        }
+        options.DefaultExtensions =
+            options.DefaultExtensions.Select(x =&amp;gt; x.StartsWith(".") ? x : ("." + x)).ToList();
+
+        _next = next;
+        _options = options;
+    }
+
+    public Task Invoke(IDictionary&amp;lt;string, object&amp;gt; environment)
+    {
+        IOwinContext context = new OwinContext(environment);
+        if (IsGetOrHeadMethod(context.Request.Method)
+            &amp;amp;&amp;amp; !PathEndsInSlash(context.Request.Path))
+        {
+            // Check if there's a file with the matched extension, and rewrite the request if found
+            foreach (string extension in _options.DefaultExtensions)
+            {
+                string filePath = context.Request.Path + extension;
+                IFileInfo fileInfo;
+                if (_options.FileSystem.TryGetFileInfo(filePath, out fileInfo))
+                {
+                    context.Request.Path = new PathString(filePath);
+                    break;
+                }
+            }
+        }
+
+        return _next(environment);
+    }
+
+    // These methods are from Microsoft.Owin.StaticFiles.Helpers
+    private static bool IsGetOrHeadMethod(string method)
+    {
+        return IsGetMethod(method) || IsHeadMethod(method);
+    }
+
+    private static bool IsGetMethod(string method)
+    {
+        return string.Equals("GET", method, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsHeadMethod(string method)
+    {
+        return string.Equals("HEAD", method, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool PathEndsInSlash(PathString path)
+    {
+        return path.Value.EndsWith("/", StringComparison.Ordinal);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can see that besides some housekeeping code, it's very straightforward. Literally all we're doing is checking if a file exists with one of our default extensions and then rewritting the query to include the extension if a file does exist. That way, downstream middleware will just see the request with the extension and it'll work as if the extension were there all along.&lt;/p&gt;
+&lt;p&gt;To actually use the middleware, I wrote some short extensions:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public static class ExtensionlessUrlsExtensions
+{
+    public static IAppBuilder UseExtensionlessUrls(this IAppBuilder builder)
+    {
+        return builder.UseExtensionlessUrls(new ExtensionlessUrlsOptions());
+    }
+
+    public static IAppBuilder UseExtensionlessUrls(this IAppBuilder builder, ExtensionlessUrlsOptions options)
+    {
+        if (builder == null)
+        {
+            throw new ArgumentNullException("builder");
+        }
+
+        return builder.Use&amp;lt;ExtensionlessUrlsMiddleware&amp;gt;(options);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And then placed this code where I spin up the server:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;WebApp.Start(options, app =&amp;gt;
+{
+    IFileSystem outputFolder = new PhysicalFileSystem(/* output folder */);
+
+    // ...
+    
+    app.UseExtensionlessUrls(new ExtensionlessUrlsOptions
+    {
+        FileSystem = outputFolder
+    });
+    
+    // ...
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+</content></entry><entry><id>http://daveaglick.com/posts/converting-my-blog-to-wyam</id><title type="text">Converting My Blog to Wyam - How I went from compiled to static in less than a day.</title><published>2015-07-07T00:00:00Z</published><updated>2015-07-07T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/converting-my-blog-to-wyam" /><content type="text">&lt;p&gt;I &lt;a href="/posts/announcing-wyam"&gt;recently launched a new static site generator&lt;/a&gt;, and I figured what better test of whether it's ready for widespread use than to convert my entire blog to use it. Given that this blog was originally built with ASP.NET MVC, it should be a good fit for converting over to a Razor-based static site generator. The process was actually  easier than I thought it would be and suggests that &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt; is already ready for production use on personal sites, blogs, etc.&lt;/p&gt;
+&lt;p&gt;I went into the process with a few requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The rendered HTML had to match the original site. I wasn't interested in redesigning things at the same time I was converting the backend.&lt;/li&gt;
+&lt;li&gt;I wanted to support Markdown documents as well as Razor pages (which was the only option before).&lt;/li&gt;
+&lt;li&gt;The new site couldn't be more complex than the old site. For example, site layouts still had to be contained in a single file, etc.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I also decided that I wanted to see if I could easily support an alternate development environment that didn't involve Visual Studio (since Visual Studio wouldn't have recognized the collection of files Wyam was reading as a normal web site project anyway). I took the opportunity to really dig in to &lt;a href="https://code.visualstudio.com/"&gt;Visual Studio Code&lt;/a&gt; and am happy to report I have fallen in love with it as a lightweight editing alternative when you don't need a full IDE. I also fired up Wyam in a console with the command &lt;code&gt;Wyam.exe --watch --preview&lt;/code&gt; and left it running in the background while I worked. That way, any time I saved a file, the site would get regenerated and I could (almost) immediately preview it in a browser using the local Wyam web server.&lt;/p&gt;
+&lt;p&gt;The first step was getting all the layout files to work. Because the &lt;a href="http://wyam.io/modules/razor"&gt;Wyam Razor module&lt;/a&gt; already supports the standard Razor layout file conventions, this mostly amounted to copying and pasting the layout and content files to the new site. Once I got the general layout working, I starting bringing over some of the non-blog pages (like &lt;a href="/about"&gt;about&lt;/a&gt; and &lt;a href="/likes"&gt;likes&lt;/a&gt;). These were originally Razor pages so I just left them that way. This is where I hit my first snag. The original site used a custom Razor base page to expose a page property that the views could use for easy access to &lt;a href="http://fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt;. Getting &lt;a href="http://fluentbootstrap.com"&gt;FluentBootstrap&lt;/a&gt; into the static site wasn't hard as I had already developed a &lt;a href="https://www.nuget.org/packages/FluentBootstrap.Wyam"&gt;NuGet package for this purpose&lt;/a&gt;, but exposing the property so I didn't have to rewrite all my views turned out to be a challenge. To resolve this, I added support to the &lt;a href="http://wyam.io/modules/razor"&gt;Wyam Razor module&lt;/a&gt; for specifying base pages and then created my base page class right in the Wyam config file for the site:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public abstract class RazorPage : BaseRazorPage
+{
+  public WyamBootstrapHelper Bs
+  {
+    get { return Html.Bootstrap(); }
+  }
+}
+// ...
+Pipelines.Add(
+  // ...
+  Razor(typeof(RazorPage))
+  // ...
+);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Once I had the non-blog pages working, I moved on the blog posts. In the previous site each post specified it's metadata (like title, published date, etc.) by setting additional Razor page properties from the custom base class. In this case, I had a better mechanism for specifying metadata and used &lt;a href="http://wyam.io/modules/yaml"&gt;YAML&lt;/a&gt; &lt;a href="http://wyam.io/modules/frontmatter"&gt;front matter&lt;/a&gt; for the metadata. This required me to manually change the declarations at the top of each blog post from something like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{
+    Title = "Announcing LINQPad.CodeAnalysis";
+    Lead = ".NET Compiler Platform helpers and utilities for LINQPad.";
+    Published = new DateTime(2015, 3, 18);
+    Tags = new[] { "LINQPad", "open source", "Roslyn", ".NET Compiler Platform" };
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To something like this:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;Title: Announcing LINQPad.CodeAnalysis
+Lead: .NET Compiler Platform helpers and utilities for LINQPad.
+Published: 3/18/2015
+Tags:
+  - LINQPad
+  - open source
+  - Roslyn
+  - .NET Compiler Platform
+---
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It's a nice side benefit that the YAML is easier to read as well. This process took about an hour for all my posts.&lt;/p&gt;
+&lt;p&gt;The last step was to convert over the more dynamic pages in the site, specifically the &lt;a href="/posts"&gt;post archives&lt;/a&gt; and &lt;a href="/tags"&gt;list of tags&lt;/a&gt; and cooresponding tag archives. For the post archive, I wrote a LINQ statement that used the Wyam metadata to fetch all the posts in the site:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{
+  foreach(IGrouping&amp;lt;int, IDocument&amp;gt; year in Documents
+    .Where(x =&amp;gt; x.ContainsKey("Published"))
+    .OrderByDescending(x =&amp;gt; x.Get&amp;lt;DateTime&amp;gt;("Published"))
+    .GroupBy(x =&amp;gt; x.Get&amp;lt;DateTime&amp;gt;("Published").Year)
+    .OrderByDescending(x =&amp;gt; x.Key))
+  {
+    &amp;lt;h3&amp;gt;@year.Key&amp;lt;/h3&amp;gt;
+    // ...
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Then for the tags, I did something similar (this uses the special &lt;code&gt;ToLookup&lt;/code&gt; extension for handling metadata lookup in Wyam):&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;@{    
+  var DocumentsByTag = Documents
+    .ContainsKey("Published")
+    .ToLookup&amp;lt;string&amp;gt;("Tags");
+}
+// ...
+@{
+  foreach (var tagDocuments in DocumentsByTag.OrderBy(x =&amp;gt; x.Key))
+  {
+    // ...
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally, to generate the individual archive page for each tag, I added a special pipeline that outputs a page per tag:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;Pipelines.Add("Tags",
+  ReadFiles(@"tags\index.cshtml"),
+  FrontMatter(),
+  Execute((doc, ctx) =&amp;gt; ctx.Documents
+    .Where(x =&amp;gt; x.ContainsKey("Published") &amp;amp;&amp;amp; x.ContainsKey("Tags"))
+    .SelectMany(x =&amp;gt; x.Get&amp;lt;string[]&amp;gt;("Tags"))
+    .Distinct()
+    .Select(x =&amp;gt; doc.Clone(new Dictionary&amp;lt;string, object&amp;gt;()
+    { 
+      { "Title", x },
+      { "Tag", x }
+    }))),
+  Razor(typeof(RazorPage)),
+  WriteFiles(x =&amp;gt; HtmlHelperExtensions.GetTagLink(x.String("Tag")) + ".html")
+);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In total, it probably took me about 6 hours to convert over the entire site. While it wasn't turn-key, that's not really the point anyway. I could have built the site from scratch on a site generator that prescribed a specific file convention, metadata, etc. but instead I was able to relativly easily adapt an existing, fairly complex site without too much trouble. That's the reason I built Wyam, to give developers a powerful tool to build exactly the content they want, the way they want to build it. Now it's &lt;a href="http://wyam.io/knowledgebase/continuous-integration"&gt;building automatically from AppVeyor on every commit&lt;/a&gt;, I can use &lt;a href="http://wyam.io/modules/markdown"&gt;Markdown&lt;/a&gt;, and it gets served lightning-fast for free from &lt;a href="https://pages.github.com/"&gt;GitHub Pages&lt;/a&gt;. If you're interested in doing something similar, &lt;a href="https://github.com/daveaglick/daveaglick"&gt;check out the source code for this site&lt;/a&gt; as an example. And please don't hesitate to ask here or on Twitter for help!&lt;/p&gt;
+
+</content></entry><entry><id>http://daveaglick.com/posts/announcing-wyam</id><title type="text">Announcing Wyam - A modular static content generator built on Roslyn, Razor, and rainbows.</title><published>2015-06-28T00:00:00Z</published><updated>2015-06-28T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/announcing-wyam" /><content type="text">&lt;p&gt;I am very proud to announce my newest project, &lt;a href="http://wyam.io"&gt;Wyam&lt;/a&gt;. It's a static site and content generator built from the ground up to be modular and flexible.&lt;/p&gt;
+&lt;p&gt;Here's the thing: I like static site generators. I've been thinking about this problem for a long time (as in, many years). In fact, I did a roundup of &lt;a href="/posts/a-survey-of-dotnet-static-site-generators"&gt;.NET static site generators&lt;/a&gt; not too long ago. And while there are &lt;em&gt;a lot&lt;/em&gt; of generators out there, none of them really fit with the way I think about the problem. I don't want to follow a prescribed notion of what sort of content I'm creating or follow assumptions about the location of files. I wanted a static &lt;em&gt;content&lt;/em&gt; generator that is designed from the ground up to be flexible, even if it means making it slightly more complicated to configure. There are some generators that come close (I'm personally fond of the concepts in &lt;a href="http://www.metalsmith.io/"&gt;Metalsmith&lt;/a&gt;). I'm also a .NET developer and while there are a couple good static site generators in the .NET ecosystem (&lt;a href="https://github.com/Code52/pretzel"&gt;Pretzel&lt;/a&gt; and &lt;a href="https://github.com/Sandra/Sandra.Snow"&gt;Sandra.Snow&lt;/a&gt; come to mind), I certainly don't think we've hit peak generator in that world as we have in, say, JavaScript.&lt;/p&gt;
+&lt;p&gt;More to the point, I'm a developer. You're (probably) a developer. Why do most static site generators ignore that the people most likely to use them are developers? I'm all for making things easy, but I also want the ability to use my development skills to create the site that &lt;em&gt;I&lt;/em&gt; want to create. By making lots of assumptions and abstracting away so much of the process, I get the feeling a lot of the generators out there are try to cater to my mom. Except my mom will never use a static site generator. If I told her to "generate a blog with Jekyll" she'd say "that's nice dear, why don't you talk to your father about that."&lt;/p&gt;
+&lt;p&gt;While I've had ideas about how I would make such a thing for a long time, it wasn't until recently that the tools to realize my vision finally became available. Specifically, maturity of the &lt;a href="https://github.com/dotnet/roslyn"&gt;.NET Compiler Platform&lt;/a&gt; has finally made it practical to create applications that can compile their own code. This meant that in addition to providing lots of great abstractions and extensibility points to make static content generation &lt;em&gt;easy&lt;/em&gt;, I could also provide a mechanism to configre and extend the process for more &lt;em&gt;flexibility&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Most of that flexibility is evident in the way you configure Wyam. &lt;a href="http://wyam.io/getting-started/configuration"&gt;Wyam configuration files&lt;/a&gt; are written in C#. You can make extra classes and helper methods. You can create new base pages for the &lt;a href="http://wyam.io/modules/razor"&gt;Razor module&lt;/a&gt;. You can use delegates to configure modules. Whatever you need it to do, it can do, because you can write the code to do it.&lt;/p&gt;
+&lt;p&gt;But don't get me wrong, it also does a lot for you up front. Here's a list of the current features:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Written in .NET and &lt;a href="http://wyam.io/knowledgebase/writing-a-module"&gt;easily extensible&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/getting-started/installation"&gt;Low ceremony&lt;/a&gt; - download a zip file, unzip, and run&lt;/li&gt;
+&lt;li&gt;Flexible &lt;a href="http://wyam.io/getting-started/configuration"&gt;script-based configuration&lt;/a&gt; using the power of the .NET Compiler Platform (Roslyn)&lt;/li&gt;
+&lt;li&gt;Lots of &lt;a href="http://wyam.io/modules"&gt;modules&lt;/a&gt; for things like &lt;a href="http://wyam.io/modules/readfiles"&gt;reading&lt;/a&gt; and &lt;a href="http://wyam.io/modules/writefiles"&gt;writing&lt;/a&gt; files, handling &lt;a href="http://wyam.io/modules/frontmatter"&gt;frontmatter&lt;/a&gt;, and manipulating &lt;a href="http://wyam.io/modules/metadata"&gt;metadata&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/modules/yaml"&gt;YAML parser&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/modules/less"&gt;Less CSS compiler&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Support for multiple templating languages including &lt;a href="http://wyam.io/modules/razor"&gt;Razor&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Integrated &lt;a href="http://wyam.io/getting-started/usage"&gt;web server&lt;/a&gt; for previewing output&lt;/li&gt;
+&lt;li&gt;Integrated &lt;a href="http://wyam.io/getting-started/usage"&gt;file watching&lt;/a&gt; and regeneration&lt;/li&gt;
+&lt;li&gt;Full &lt;a href="http://wyam.io/getting-started/configuration#nuget"&gt;NuGet support&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://wyam.io/knowledgebase/embedded-use"&gt;Embeddable engine&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In fact, to dogfood Wyam I generated the &lt;a href="http://wyam.io"&gt;Wyam.io&lt;/a&gt; site with it (meta!). I also refactored this blog to be generated (a post on that coming soon). In the near future, I'll also be adding many more modules including JSON and Liquid (check out the &lt;a href="https://github.com/Wyamio/Wyam/issues"&gt;GitHub issues&lt;/a&gt; for a look at upcoming features). I'd also like to explore using Wyam for non-site things like generating documentation or eBooks. I would love to attract developers of all backgrounds, but my greatest hope is that Wyam can catch on as a kind of anti-Jekyll for the .NET crowd.&lt;/p&gt;
+&lt;p&gt;Oh, and about the name. &lt;em&gt;Wyam&lt;/em&gt; is a Native American name for the &lt;a href="https://en.wikipedia.org/wiki/Celilo_Falls"&gt;Celilo Falls&lt;/a&gt; area and is also roughly translated as "echo of falling water" or "sound of water upon the rocks". Which sounds kind of like static. For a static site generator. Get it? I also liked the image of water going over the falls as one thing then going through a transition as it emerged at the bottom as something else. Plus the name just sounds cool, and the domain was available. It's also very searchable (looking at you &lt;a href="https://code.visualstudio.com/"&gt;Visual Studio Code&lt;/a&gt;).&lt;/p&gt;
+
+</content></entry><entry><id>http://daveaglick.com/posts/compiler-platform-in-t4</id><title type="text">Using the .NET Compiler Platform in T4 Templates - Metaprogramming with Roslyn.</title><published>2015-04-23T00:00:00Z</published><updated>2015-04-23T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/compiler-platform-in-t4" /><content type="text">
+&lt;p&gt;&lt;a href="https://msdn.microsoft.com/en-us/library/bb126445.aspx"&gt;T4 templates&lt;/a&gt; provide a powerful way to generate code at design time (and sometimes at compile time if you set up Visual Studio appropriately). The traditional way of accessing the code of your solution from within a T4 template is to &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/gg604090(v=vs.100).aspx"&gt;get the Visual Studio API&lt;/a&gt; (called &lt;a href="https://msdn.microsoft.com/en-us/library/vstudio/envdte.dte(v=vs.100).aspx"&gt;DTE&lt;/a&gt;). This has always seemed like a bit of a kludge to me and feels a little too far removed from the code and what it represents. We now have another option by using the .NET Compiler Platform from within a T4 template to parse, query, and output content based on the files in our solution.&lt;/p&gt;
+
+&lt;p&gt;In my particular case I wanted to scan all the source files in the same folder as the template, look for classes that derive from a specific base class (
+&lt;code&gt;Module&lt;/code&gt;), iterate over all their public constructors, and then output extension methods for the 
+&lt;code&gt;IPipeline&lt;/code&gt; interface for each constructor that instantiates the class using that constructor and adds it to the pipeline. Here's what the template looks like:&lt;/p&gt;
+
+
+&lt;pre class="prettyprint"&gt;&amp;lt;#@ template debug="false" hostspecific="true" language="C#" #&amp;gt;
+&amp;lt;#@ assembly name="System.Core" #&amp;gt;
+&amp;lt;#@ assembly name="System.IO" #&amp;gt;
+&amp;lt;#@ assembly name="System.Runtime" #&amp;gt;
+&amp;lt;#@ assembly name="System.Text.Encoding" #&amp;gt;
+&amp;lt;#@ assembly name="System.Threading.Tasks" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)Microsoft.CodeAnalysis.dll" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)Microsoft.CodeAnalysis.CSharp.dll" #&amp;gt;
+&amp;lt;#@ assembly name="$(TargetDir)System.Collections.Immutable.dll" #&amp;gt;
+&amp;lt;#@ import namespace="System.Linq" #&amp;gt;
+&amp;lt;#@ import namespace="System.Text" #&amp;gt;
+&amp;lt;#@ import namespace="System.Collections.Generic" #&amp;gt;
+&amp;lt;#@ import namespace="System.IO" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis.CSharp" #&amp;gt;
+&amp;lt;#@ import namespace="Microsoft.CodeAnalysis.CSharp.Syntax" #&amp;gt;
+&amp;lt;#@ output extension=".cs" #&amp;gt;
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+&amp;lt;# Process(); #&amp;gt;
+&amp;lt;#+
+	public void Process()
+	{
+		// Get a SyntaxTree for every file
+		foreach(CSharpSyntaxTree syntaxTree in Directory.EnumerateFiles(Path.GetDirectoryName(Host.TemplateFile))
+			.Where(x =&amp;gt; Path.GetExtension(x) == ".cs")
+			.Select(x =&amp;gt; CSharpSyntaxTree.ParseText(File.ReadAllText(x)))
+			.Cast&amp;lt;CSharpSyntaxTree&amp;gt;())
+		{
+			// Get all class declarations in each file that derive from Module
+			foreach(ClassDeclarationSyntax classDeclaration in syntaxTree.GetRoot()
+				.DescendantNodes()
+				.OfType&amp;lt;ClassDeclarationSyntax&amp;gt;()
+				.Where(x =&amp;gt; x.BaseList != null &amp;amp;&amp;amp; x.BaseList.Types
+					.Any(y =&amp;gt; y.Type is Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax 
+						&amp;amp;&amp;amp; ((Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax)y.Type).Identifier.Text == "Module")))
+			{
+				// Output the same namespace as the class
+				SyntaxNode namespaceNode = classDeclaration.Parent;
+				while(namespaceNode != null &amp;amp;&amp;amp; !(namespaceNode is NamespaceDeclarationSyntax))
+				{
+					namespaceNode = namespaceNode.Parent;
+				}
+				if(namespaceNode != null)
+				{
+					WriteLine("namespace " + ((NamespaceDeclarationSyntax)namespaceNode).Name.ToString() + Environment.NewLine + "{");
+				}
+			
+				// Output the extensions class
+				WriteLine("    public static class " + classDeclaration.Identifier.Text + "PipelineExtensions" + Environment.NewLine + "    {");
+			
+				// Get all non-static public constructors
+				foreach(ConstructorDeclarationSyntax constructor in classDeclaration.Members
+					.OfType&amp;lt;ConstructorDeclarationSyntax&amp;gt;()
+					.Where(x =&amp;gt; x.Modifiers.Count == 1 &amp;amp;&amp;amp; x.Modifiers[0].Text == "public"))
+				{
+					// Output the static constructor method
+					WriteLine("        public static IPipeline " + classDeclaration.Identifier.Text + constructor.ParameterList.ToString().Insert(1, "this IPipeline pipeline, ") + Environment.NewLine + "        {");
+				
+					// Create and add the module
+					WriteLine("            return pipeline.AddModule(new " + classDeclaration.Identifier.Text + "(" + string.Join(", ", constructor.ParameterList.Parameters.Select(x =&amp;gt; x.Identifier.Text)) + "));");
+				
+					// Close method
+					WriteLine("        }");
+				}
+			
+				// Close extensions class
+				WriteLine("    }");			
+			
+				// Close namespace
+				if(namespaceNode != null)
+				{
+					WriteLine("}");
+				}
+			}
+		}
+	}
+#&amp;gt;&lt;/pre&gt;
+
+&lt;p&gt;And this is some example output:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace Wyam.Core.Modules
+{
+    public static class AppendPipelineExtensions
+    {
+        public static IPipeline Append(this IPipeline pipeline, string content)
+        {
+            return pipeline.AddModule(new Append(content));
+        }
+    }
+}&lt;/pre&gt;
+
+&lt;p&gt;A couple things to note:&lt;/p&gt;
+
+
+&lt;ul class="p"&gt;
+ &lt;li&gt;You must use the Roslyn assemblies from NuGet. If you try to build them yourself, they won't work out of the box in a T4 template because of the way Roslyn assemblies are delay signed.&lt;/li&gt;
+ &lt;li&gt;In this case I didn't even need to compile or get a semantic model, the syntax tree was enough for me. If you need to go further (such as using symbol information) you can always bring in the Roslyn compilation APIs.&lt;/li&gt;
+ &lt;li&gt;I prefer to write my T4 templates entirely in C# and output content using &lt;code&gt;WriteLine()&lt;/code&gt;. You can obviously use a different approach such as interspersing control logic with template content.&lt;/li&gt;
+&lt;/ul&gt;</content></entry><entry><id>http://daveaglick.com/posts/identity-crisis</id><title type="text">Identity Crisis - Changing your name in the digital age.</title><published>2015-03-19T00:00:00Z</published><updated>2015-03-19T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/identity-crisis" /><content type="text">
+&lt;p&gt;Inspired by notable tech personalities like &lt;a href="http://www.hanselman.com/"&gt;Scott Hanselman&lt;/a&gt; and &lt;a href="http://simpleprogrammer.com/"&gt;John Sonmez&lt;/a&gt; who place a lot of emphasis on "personal brand", I've recently been thinking about my own personal brand. Because the username I used was common enough that I wasn't always the first to claim it, I ended up with a lot of slightly different usernames across different platforms. I was 
+&lt;code&gt;somedave&lt;/code&gt; on GitHub and Stack Overflow, 
+&lt;code&gt;@somedaveg&lt;/code&gt; on Twitter, 
+&lt;code&gt;somedavedg&lt;/code&gt; on Reddit, etc. and my website was 
+&lt;code&gt;somedave.com&lt;/code&gt;. I'm not nearly notable enough for this to make much of a difference (fun experiment, try Googling just "Scott"), but it bothered me none the less. When someone puts my username in a GitHub issue, I want that to also point to my Twitter handle, etc. Not to mention, my various usernames didn't really identify &lt;em&gt;me&lt;/em&gt;. There was no real indication of who was behind them other than someone named Dave. And maybe one day, it actually will make a difference. So I set out to set things right.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;I am now known everywhere as 
+&lt;code&gt;daveaglick&lt;/code&gt; and my site is at 
+&lt;code&gt;daveaglick.com&lt;/code&gt;.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Granted, it's a little long. I obviously would have preferred something more concise like 
+&lt;code&gt;dglick&lt;/code&gt; or 
+&lt;code&gt;daveglick&lt;/code&gt;, but I'm a little late to the Twitter handle party at this point and I really wanted to find a username that was available everywhere. I had been thinking about this for a while; it wasn't a spur of the moment decision. I had planned which services I needed to change, made sure the name was available everywhere, and then changed it in a deliberate sequence. In case you're thinking about doing the same thing, here's the steps I took.&lt;/p&gt;
+
+
+&lt;h3&gt;Find a Name&lt;/h3&gt;
+
+&lt;p&gt;First I went to &lt;a href="http://checkusernames.com/"&gt;http://checkusernames.com/&lt;/a&gt; to verify the name was available on a wide range of services. There are other sites like this, but they all do essentially the same thing by checking for username availability across a wide spectrum of social and other sites. I also cross-checked with a domain registrar (I use Namecheap) to make sure I could also get the 
+&lt;code&gt;.com&lt;/code&gt; and 
+&lt;code&gt;.net&lt;/code&gt; of the same name. I focused on names that were both consist across sites and domains and that included my own name clearly.&lt;/p&gt;
+
+
+&lt;h3&gt;Set Up Email&lt;/h3&gt;
+
+&lt;p&gt;Once I had found a name that I was sure would be available, I proceeded to register the domains and set up a new email address. I figured this was important to do first because as I change profiles at the various sites I'll need to input my new email address. I use Exchange Online, and thankfully it supports multiple domains and multiple email addresses per user so getting this set up to support both my old address and my new one was pretty easy. I wanted to go all the way, so I even changed my primary account name with Office 365 and deleted my email profiles from a my desktop and mobile devices and then added them back with my new account name.&lt;/p&gt;
+
+
+&lt;h3&gt;Migrate My Website&lt;/h3&gt;
+
+&lt;p&gt;I felt it was important to also get my new website up and running before pointing my social profiles in that direction. The hardest part of this process was recoding the site. Since my site is all custom code, I had to scrub it for any uses of my old name and replace it with my new one where appropriate. This wasn't too bad, and using a simple file content search helped a lot. I also renamed the Visual Studio solution and project files, changed the default namespace, etc. so that the code reflected the new home. I do use Disqus, so I had to change that as well. While I could change my Disqus username without a problem, and they even provide some handly domain migration tools, you can't change the shortname (their version of a site id) for an existing site. That part had to stay as-is in the code, but since it's in JavaScript, no one will see it and it should be invisible. Then I created a new site in Azure, directed my new domain to it, and republished the site. No surprises.&lt;/p&gt;
+
+&lt;p&gt;The second part of publishing the new site was setting up redirects for all the old ones. Namecheap makes it easy to do this, but you have to remember to add a trailing slash to the redirect destination otherwise the full path won't come along for the ride. I also had a redirect set up with Wordpress for my old blog, so I changed that too for good measure. It still would have worked if I hadn't by redirecting from Wordpress to my old domain and then to my new domain, but one redirect is better than two. I used 301 redirects so that search engines pick up on the change and should adjust accordingly.&lt;/p&gt;
+
+
+&lt;h3&gt;GitHub&lt;/h3&gt;
+
+&lt;p&gt;My next migration was GitHub. This one had me the most nervous because I'm starting to get some traction for some of my projects and I was worried about the implications. However, GitHub has a very nice policy of redirecting repos and other content when you change your username. This isn't permanent, and they warn that it'll stop if someone registers your old name and then created repositories with similar names, but it's as good as could be expected. Changing my GitHub username was easy, but updating all of the repositories on my local system to point to the new address and use my new email address was time consuming. You don't have to strictly do this step (because of the redirects), but I felt like it was better to do it now and get it over with then have potential confusion later.&lt;/p&gt;
+
+
+&lt;h3&gt;Twitter&lt;/h3&gt;
+
+&lt;p&gt;Next up was Twitter. Changing a username on Twitter is also really easy, and your followers and other profile information stay intact, but it doesn't "redirect" older mentions to your new handle. Since Twitter now indexes everything and provides longer-term search, who knows when an old Tweet might come up that references your old handle? My solution to this was to register my old Twitter handle as a new account soon as I changed my existing profile to the new handle. Then I could add some information to the profile for the old handle pointing people to my new one. Again, probably not necessary given my relative obscurity, but hey - why not?&lt;/p&gt;
+
+
+&lt;h3&gt;Other Sites&lt;/h3&gt;
+
+&lt;p&gt;Then there were a bunch of other sites: Goodreads, Stack Overflow, Gravatar, LinkedIn, Facebook, etc. I was pleasantly surprised to find that most sites provide capabilities for changing your identifier without much hassle. I did have trouble with a few though. Codeplex just doesn't let you change it, in fact their profile options are basically non-existent. Reddit doesn't let you change your username either, and their recommendation is to create a new account and loose all your karma, etc. Thankfully I'm not a big Reddit user, so this wasn't a big deal. Also, NuGet doesn't have a facility to do this, but &lt;a href="https://github.com/NuGet/NuGetGallery/issues/319"&gt;there's a GitHub issue suggesting you can contact them&lt;/a&gt;. My request for a change is pending.&lt;/p&gt;
+
+
+&lt;h3&gt;Not Quite Done&lt;/h3&gt;
+
+&lt;p&gt;It took me the better part of an afternoon, but at this point I'm almost there. I still need to search the web, Stack Overflow, and other forums I participate in to locate links that point to my old GitHub profile or web site and edit them to point to the correct place. I'm also sure I'll think of some other clean up to do as well, but for the most part this wasn't too complex. It just took some planning and time.&lt;/p&gt;</content></entry><entry><id>http://daveaglick.com/posts/announcing-linqpad-codeanalysis</id><title type="text">Announcing LINQPad.CodeAnalysis - .NET Compiler Platform helpers and utilities for LINQPad.</title><published>2015-03-18T00:00:00Z</published><updated>2015-03-18T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/announcing-linqpad-codeanalysis" /><content type="text">
+&lt;p&gt;LINQPad.CodeAnalysis is a library that contains a set of .NET Compiler Platform helpers and utilities for LINQPad. Because it is so low ceremony but also has advanced functionality like debugging, data source connections, and advanced output and visualization, LINQPad provides an ideal platform for quickly experimenting, exploring, and working with the .NET Compiler Platform.&lt;/p&gt;
+
+&lt;p&gt;The first feature (of what I plan to be many) is a syntax tree visualizer similar to the one available for Visual Studio 2015. It allows you to dump a syntax tree for your current query, other queries, or generated directly via the .NET Compiler Platform.&lt;/p&gt;
+
+
+&lt;img src="/Content/posts/syntax-tree.png" class="img-responsive"&gt;
+
+&lt;p&gt;More information including installation and usage instructions is available at &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;https://github.com/daveaglick/LINQPad.CodeAnalysis&lt;/a&gt;&lt;/p&gt;</content></entry><entry><id>http://daveaglick.com/posts/compiler-platform-scripting</id><title type="text">Introduction to Scripting with the .NET Compiler Platform (Roslyn) - So easy a caveman can do it.</title><published>2015-02-18T00:00:00Z</published><updated>2015-02-18T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/compiler-platform-scripting" /><content type="text">
+&lt;p&gt;Scripting support in the .NET Compiler Platform (formerly known as Roslyn) has been a long time coming. It was originally introduced more than a year ago and then removed while the team considered what the ideal API should look like. It was recently reintroduced into the &lt;a href="https://github.com/dotnet/roslyn/tree/master/src/Scripting"&gt;master source branch on GitHub&lt;/a&gt;, though as of this blog post it still isn't available on the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;. In this post I will explain how to obtain and build the new scripting bits (including on a system without Visual Studio 2015 - it can actually be built using only Visual Studio 2013), introduce some of the scripting functionality, and show some scenarios where this might be helpful in your own applications. I also want to caveat this post by saying that it may go out of date quickly. The .NET Compiler Platform is under heavy development and it is changing frequently, including the public API. While I wouldn't expect any sweeping changes in the scripting support at this point, many of the details are subject to change.&lt;/p&gt;
+
+
+&lt;h2&gt;Obtaining and Building&lt;/h2&gt;
+
+&lt;p&gt;Since the scripting support isn't available in one of the binary distribution channels like the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;, you'll need to obtain and build the .NET Compiler Platform from source in order to use them. Luckily the development team has been working hard to ensure this part is straightforward. The first step is to clone the &lt;a href="https://github.com/dotnet/roslyn"&gt;repository from GitHub&lt;/a&gt; using the following command (or your favorite Git GUI): 
+&lt;code&gt;git clone https://github.com/dotnet/roslyn.git&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The readme file says that to build the libraries you'll need Visual Studio 2015, but that's not actually true. You can build the .NET Compiler Platform just fine with only Visual Studio 2013 using the special 
+&lt;code&gt;Roslyn2013.sln&lt;/code&gt; solution file they've provided. In fact, it's just a simple two-command process. Make sure to run these commands from a Visual Studio command prompt. First you have to restore the NuGet packages and then build the solution. You might get some warnings about missing FxCop, but those are safe to ignore. From the 
+&lt;code&gt;\src&lt;/code&gt; directory in the repository run:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;powershell .nuget\NuGetRestore.ps1
+msbuild Roslyn2013.sln&lt;/pre&gt;
+
+&lt;p&gt;This will compile a bunch of libraries to the 
+&lt;code&gt;\Binaries\Debug&lt;/code&gt; directory. You don't need all of them for scripting. Assuming you want to script in C#, the libraries you need are:&lt;/p&gt;
+
+
+&lt;ul class="p"&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.CSharp&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Desktop&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.CSharp.Desktop&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Scripting&lt;/li&gt;
+ &lt;li&gt;Microsoft.CodeAnalysis.Scripting.CSharp&lt;/li&gt;
+ &lt;li&gt;System.Collections.Immutable&lt;/li&gt;
+ &lt;li&gt;System.Reflection.Metadata&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I also ran into a problem with 
+&lt;code&gt;VBCSCompiler.exe&lt;/code&gt; crashing during the build, which appears like it might be related to &lt;a href="https://github.com/dotnet/roslyn/issues/110"&gt;this issue&lt;/a&gt;. In any case, upgrading to the latest .NET 4.5.2 runtime resolved my problem. Of course, if you have Visual Studio 2015 installed you can also try building the other 
+&lt;code&gt;Roslyn.sln&lt;/code&gt; solution.&lt;/p&gt;
+
+
+&lt;h2&gt;Your First Script&lt;/h2&gt;
+
+&lt;p&gt;Writing a simple script in the .NET Compiler Platform is really easy. For the remainder of this post I will discuss scripting in C#. There is a nearly identical API for scripting in Visual Basic if that's your thing. The 
+&lt;code&gt;CSharpScript&lt;/code&gt; class has a bunch of static methods that provide a good entry point to the API. Perhaps the most straightforward of these is 
+&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; which will evaluate C# statements and return a result. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var value = CSharpScript.Eval("1 + 2");
+Console.Write(value); // 3&lt;/pre&gt;
+
+&lt;p&gt;This returns an 
+&lt;code&gt;int&lt;/code&gt; with a value of 
+&lt;code&gt;3&lt;/code&gt;. See, easy right? If you want more control, there's also 
+&lt;code&gt;CSharpScript.Create()&lt;/code&gt; which returns a 
+&lt;code&gt;CSharpScript&lt;/code&gt; object suitable for further manipulation before evaluation and 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt; which evaluates the script and returns a 
+&lt;code&gt;ScriptState&lt;/code&gt; object with the return value and other state information useful for REPL scenarios.&lt;/p&gt;
+
+
+&lt;h2&gt;Getting Variables&lt;/h2&gt;
+
+&lt;p&gt;As you saw above, it's easy to get the return value from the script using the 
+&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; method. But what about other variables that get created during evaluation? We can get those as well by using the 
+&lt;code&gt;ScriptState&lt;/code&gt; object you get back from calling 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt;. It contains a member called 
+&lt;code&gt;Variables&lt;/code&gt; (of type 
+&lt;code&gt;ScriptVariables&lt;/code&gt;) that enumerates 
+&lt;code&gt;ScriptVariable&lt;/code&gt; objects with the name, type, and value for each variable the script created. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int c = 1 + 2;");
+var value = state.Variables["c"].Value;
+Console.Write(value); // 3&lt;/pre&gt;
+
+
+&lt;h2&gt;References and Namespaces&lt;/h2&gt;
+
+&lt;p&gt;If you want to do anything reasonably advanced, you'll probably need to include references and import namespaces for additional assemblies. Thankfully this is also really easy. There are a number of ways to do it, but the easiest is to use a 
+&lt;code&gt;ScriptOptions&lt;/code&gt; object which is accepted by any of the three 
+&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The default 
+&lt;code&gt;ScriptOptions&lt;/code&gt; includes the 
+&lt;code&gt;System&lt;/code&gt; assembly and namespace and will search for additional assemblies in the current runtime directory. To modify this, start with 
+&lt;code&gt;ScriptOptions.Default&lt;/code&gt; and use it's fluent interface to setup additional references and namespaces (you can also create your own 
+&lt;code&gt;ScriptOptions&lt;/code&gt; if you don't want the default 
+&lt;code&gt;System&lt;/code&gt; assembly and namespace). Use 
+&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; to add references and 
+&lt;code&gt;ScriptOptions.AddNamespaces()&lt;/code&gt; to add namespaces (there are also several variations on these methods). 
+&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; accepts a variety of different ways of referring to assemblies, including the .NET Compiler Platform type 
+&lt;code&gt;MetadataReference&lt;/code&gt; if you're used to using that from the other portions of the platform. Here is an example of including 
+&lt;code&gt;System.IO&lt;/code&gt; support in a script:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
+	.AddReferences(Assembly.GetAssembly(typeof(Path)))
+	.AddNamespaces("System.IO");
+var value = CSharpScript.Eval(@"Path.Combine(""A"", ""B"")", options);
+Console.Write(value); // A\B&lt;/pre&gt;
+
+
+&lt;h3&gt;Dynamic Support&lt;/h3&gt;
+
+&lt;p&gt;Getting support for 
+&lt;code&gt;dynamic&lt;/code&gt; in your script can be a challenge if only because it's not obvious which assemblies need to be referenced to support it. The answer is that you need 
+&lt;code&gt;System.Core&lt;/code&gt; and 
+&lt;code&gt;Microsoft.CSharp&lt;/code&gt;. That's all that's strictly needed, but if you also want support for 
+&lt;code&gt;ExpandoObject&lt;/code&gt; you'll need an extra reference and namespace support for 
+&lt;code&gt;System.Dynamic&lt;/code&gt;. Here is an example script with 
+&lt;code&gt;dynamic&lt;/code&gt; support (note that there's no magic to the types I pass to 
+&lt;code&gt;Assembly.GetAssembly()&lt;/code&gt;; these just happen to be types I know are defined in the required assemblies). Note also that I had to use 
+&lt;code&gt;CSharpScript.Run()&lt;/code&gt; since you can't directly return values from a script so I had to store my value in a variable and get it from the 
+&lt;code&gt;ScriptState&lt;/code&gt; object as we saw earlier.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
+	.AddReferences(
+		Assembly.GetAssembly(typeof(System.Dynamic.DynamicObject)),  // System.Code
+		Assembly.GetAssembly(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo)),  // Microsoft.CSharp
+		Assembly.GetAssembly(typeof(System.Dynamic.ExpandoObject)))  // System.Dynamic
+	.AddNamespaces("System.Dynamic");
+ScriptState state = CSharpScript.Run(@"
+	dynamic dyn = new ExpandoObject();
+	dyn.Five = 5;
+	var value = dyn.Five;", options);
+Console.Write(state.Variables["value"].Value); // 5&lt;/pre&gt;
+
+
+&lt;h2&gt;Setting Globals&lt;/h2&gt;
+
+&lt;p&gt;We've seen a number of ways of getting data out of the script, but what about getting data into the script? This is one of my favorite features of the scripting API because it's so easy to use. To set the data available to the script, you just have to pass an arbitrary object to one of the three 
+&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The members of this object will then be available to your script as globals. For example:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;// Defined elsewhere
+public class Globals
+{
+	public int X;
+	public int Y;
+}
+
+var value = CSharpScript.Eval("X + Y", new Globals { X = 1, Y = 2 });
+Console.Write(value); // 3&lt;/pre&gt;
+
+&lt;p&gt;Note that the scripting engine respects protection levels so it's not possible to directly pass an anonymous object to the script because anonymous objects are usually scoped to the method in which they appear.&lt;/p&gt;
+
+
+&lt;h2&gt;Creating a Delegate&lt;/h2&gt;
+
+&lt;p&gt;Finally you may want to compile the script, but store it for later reuse. Thankfully, there is also an easy way to create a delegate from any method in your script by calling 
+&lt;code&gt;ScriptState.CreateDelegate()&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int Times(int x) { return x * x; }");
+var fn = state.CreateDelegate&amp;lt;Func&amp;lt;int, int&amp;gt;&amp;gt;("Times");
+var value = fn(5);
+Console.Write(value);  // 25&lt;/pre&gt;
+
+
+&lt;h2&gt;Conclusions&lt;/h2&gt;
+
+&lt;p&gt;By now you've hopefully thought of some use cases for the new scripting capability. My personal favorite at the moment is using this to drive configuration files. Instead of configuring your application using XML or JSON, why not set up a scripting environment and let your users (or you) write code to configure the application. If this interests you, I should also mention &lt;a href="https://github.com/config-r/config-r"&gt;ConfigR&lt;/a&gt; which does exactly this while abstracting away many of the details. Any post on C# scripting would also be incomplete without a mention of &lt;a href="https://github.com/scriptcs/scriptcs"&gt;scriptcs&lt;/a&gt; which provides a REPL for you to use on the command line for executing your own script files.&lt;/p&gt;
+
+&lt;p&gt;There's also a lot more to the .NET Compiler Platform scripting support than what I've discussed here. It's even possible to compile your script to a syntax tree and then use the rest of the .NET Compiler Platform capabilities to explore, analyze, and manipulate the script. A good place to continue exploring is the &lt;a href="http://source.roslyn.io/"&gt;enhanced Roslyn source view site&lt;/a&gt;.&lt;/p&gt;</content></entry><entry><id>http://daveaglick.com/posts/random-polygon-page-backgrounds</id><title type="text">Random Polygon Page Backgrounds - My god, it's full of triangles.</title><published>2015-01-30T00:00:00Z</published><updated>2015-01-30T00:00:00Z</updated><author><name>Dave Glick</name></author><link rel="alternate" href="http://daveaglick.com/posts/random-polygon-page-backgrounds" /><content type="text">&lt;p&gt;You may have noticed that this site uses a randomly generated page background. To see it in action, just hit refresh. It creates a unique series of polygons with gradual horizontal shading in a random muted colors. I figured I would take a couple minutes to explain how it's done.&lt;/p&gt;
+
+&lt;p&gt;The magic is from a JavaScript library called &lt;a href="http://qrohlf.com/trianglify/"&gt;Trianglify&lt;/a&gt; (&lt;a href="https://github.com/qrohlf/trianglify"&gt;GitHub&lt;/a&gt;). It can create these sorts of patterns in any size with lots of customizations like polygon size, colors, etc. It then provides the final image as a data URI that can be applied to any CSS element. The GitHub readme actually has an example of setting a background using the library:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var t = new Trianglify();
+    var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+    document.body.setAttribute('style', 'background-image: '+pattern.dataUrl);&lt;/pre&gt;
+
+&lt;p&gt;The challenge for me was getting the background to look nice. I thought the default random palettes were a little too loud, so I set out to generate my own. I still wanted some randomness though, so I looked for libraries that could generate entire color schemes while allowing some control over things like saturation. I found &lt;a href="http://www.checkman.io/please/"&gt;Please.js&lt;/a&gt; (&lt;a href="https://github.com/Fooidge/PleaseJS"&gt;GitHub&lt;/a&gt;) which works perfectly. It returns an array of colors to your specifications including how many, what hue or saturation, and other settings.&lt;/p&gt;
+
+&lt;p&gt;The final trick was getting the background to blend vertically. Since some of the pages on this site are very long, I didn't want to generate backgrounds that took the entire page height. Therefore the backgrounds needed to be tiled. The solution to this was to tell Trianglify to use a horizontal gradient of random colors, but to use a single color for the vertical gradient. This way, with a muted enough color scheme, the line where the tiling takes place isn't very visible (if you look closely you'll be able to spot it).&lt;/p&gt;
+
+&lt;p&gt;My final code looks like this:&lt;/p&gt;
+
+&lt;pre class="prettyprint"&gt;var colors = Please.make_color({
+        golden: false,
+        colors_returned: 3,
+        saturation: .4
+    });
+    var t = new Trianglify({
+        x_gradient: colors,
+        y_gradient: ["#FFFFFF"]
+    });
+    var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+    document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);&lt;/pre&gt;</content></entry></feed>

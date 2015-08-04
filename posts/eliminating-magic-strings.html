@@ -1,0 +1,368 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Eliminating Magic Strings in ASP.NET MVC</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Eliminating Magic Strings in ASP.NET MVC" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/eliminating-magic-strings" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Eliminating Magic Strings in ASP.NET MVC</div>
+                <div class="lead">One man&#39;s quest to get rid of quotes.</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/asp.net" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET</a>
+     <a role="button" href="/tags/asp.net-mvc" class="btn btn-default btn-sm tag-button icon-tag-2"> ASP.NET MVC</a>
+     <a role="button" href="/tags/magic-strings" class="btn btn-default btn-sm tag-button icon-tag-2"> magic strings</a>
+     <a role="button" href="/tags/programming" class="btn btn-default btn-sm tag-button icon-tag-2"> programming</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Monday, January 5, 2015</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="eliminating-magic-strings"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/eliminating-magic-strings" data-via="daveaglick" data-text="Eliminating Magic Strings in ASP.NET MVC" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12">
+<p>Except for direct screen output, I really dislike coded string literals. Using strings to refer to properties, methods, classes, etc. makes it much easier to introduce code quality problems. This includes things like mistyped identifiers, missed refactoring renames, and poor code analysis capabilities. I am constantly on the hunt for ways to remove these "magic strings" and replace them with strongly-typed counterparts. This post describes several of the tools and techniques I've found that work well. While this post addresses the elimination of magic strings from ASP.NET MVC web applications, many of the strategies are applicable to other code as well.</p>
+
+
+<h2>What Are Magic Strings?</h2>
+
+<p>Before discussing how to get rid of them, lets consider what a "magic string" is. A magic string is just a string literal that's used to refer to a code artifact. They often become necessary when a language uses dynamic features that require references to other code. For example, when you want to generate a link in ASP.NET MVC you need to pass in the name of the controller and action:</p>
+
+<pre class='prettyprint'>@Html.ActionLink(&quot;User Profile&quot;, &quot;UserProfileAction&quot;, &quot;ProfileController&quot;)</pre>
+
+<p>Another area where you see a lot of magic strings in .NET is when you need to refer to code artifacts in attribute arguments. Since attributes are essentially constructed at compile time, they can only use primitive constants as arguments. This results in attribute declarations that look like this:</p>
+
+<pre class='prettyprint'>[MyAttribute(&quot;SomeClassName&quot;, &quot;SomePropertyName&quot;)]</pre>
+
+<p>To some extent a lot of view code is also magic strings. For example, when you refer to a CSS class or the path to a stylesheet or JavaScript file. Heck, even the HTML tag names are magic strings. Generally speaking, a string (or identifier) that is not meant for output and that is not checked at compile-time is a magic string. Notice that I also included identifiers that aren't checked at compile-time. Magic strings don't necessarily have to be strings. The identifiers used in dynamic and anonymous objects in C# are really just syntactic sugar for strings (like the keys in a dictionary) and subject to the same shortcomings.</p>
+
+<p>So why are these so bad? There are many reasons why you want to try and avoid this type of string literal if you can:</p>
+
+<ul class="p">
+    <li><strong>Mistyping.</strong> It's very easy to mistype a string literal. Without compile-time checking you'd never know you got it wrong until something doesn't work right at run-time. If you're lucky you'll get an exception. If you're not so lucky (such as a mistyped CSS class name) things just won't look quite right.</li>
+    <li><strong>Refactoring.</strong> It's much easier to refactor strongly-typed identifiers. When refactoring magic strings you have to make sure you change every instance. And if you miss one, there's no warning or error until run-time.</li>
+    <li><strong>Duplicative.</strong> Magic strings cause you to repeat yourself. Sometimes a lot. If you refer to the same controller and action from multiple views, you may end up using those strings in many places.</li>
+    <li><strong>Lack of static code analysis.</strong> We now have so many great tools for performing static code analysis. These tools can quickly identify all the uses of a particular identifier, perform templated refactoring, and generally help us write better code faster. This includes IntelliSense, which uses static code analysis. Magic strings are invisible to static code analyzers. They can't be searched for (other than by plain text), won't show up in IntelliSense, etc.</li>
+</ul>
+
+<p>I will admit that perhaps "magic string" is a bad term for what I'm trying to describe and eventually eliminate. In fact, <a href="http://rob.conery.io/2011/03/10/are-friends-immutable/">Rob Conery writes a good case against this term and argues it should apply only to conceptual mismatches</a>. He also takes issue with the underlying premise that this type of string literal is bad. Regardless, the term seems to be accepted within the C# community and I've certainly experienced complications from some of the problems above, so I do find them to be a real issue.</p>
+
+<p>Now that we've considered what a magic string is and why they're bad, lets investigate some strategies for getting rid of them.</p>
+
+
+<h2>T4MVC</h2>
+
+<p>By far the best thing you can do in ASP.NET MVC is to get <a href="https://t4mvc.codeplex.com/">T4MVC</a>. This library uses a T4 template to scan your project and generate all sorts of strongly-typed helpers and string constants for your controllers, actions, resources, and more. It even encapsulates all of this in special helper extensions so that you never even have to use strings and instead get a nice IntelliSense experience.</p>
+
+<p>For example, you can write:</p>
+
+<pre class='prettyprint'>@Html.ActionLink(&quot;User Profile&quot;, MVC.Profile.UserProfile())</pre>
+
+<p>Instead of:</p>
+
+<pre class='prettyprint'>@Html.ActionLink(&quot;User Profile&quot;, &quot;UserProfileAction&quot;, &quot;ProfileController&quot;)</pre>
+
+<p>There are too many features to list here, so <a href="https://t4mvc.codeplex.com/documentation">check out the documentation to learn more</a>.</p>
+
+<p>Also, since T4MVC uses a T4 template, the template results need to be rebuilt when your code changes. Visual Studio usually only processes T4 templates when the template itself changes. To get Visual Studio to regenerate the T4MVC helpers on every build you'll want to check out <a href="https://visualstudiogallery.msdn.microsoft.com/8d820b76-9fc4-429f-a95f-e68ed7d3111a">AutoT4MVC</a>.</p>
+
+
+<h2>MetaGen</h2>
+
+<p>While T4MVC works wonders for all the MVC code in your application, what about the other stuff? <a href="http://danielvaughan.org/post/MetaGen-A-project-metadata-generator-for-Visual-Studio-using-T4.aspx">MetaGen</a> is a small T4 template similar to T4MVC that reads all the classes and interfaces in the project and outputs <code>static</code> metadata classes with <code>const</code> strings for their members. It's especially helpful when creating bindings in view code to properties of your view models. For example, instead of having to put a magic string into the <code>name</code> and/or <code>id</code> attributes of HTML form fields like this:</p>
+
+<pre class='prettyprint'>&lt;input id=&quot;Username&quot; name=&quot;Username&quot; type=&quot;text&quot;&gt;</pre>
+
+<p>You can refer instead to the generated <code>const</code> string from MetaGen like this:</p>
+
+<pre class='prettyprint'>&lt;input id=&quot;@LoginMetadata.Username&quot; name=&quot;@LoginMetadata.Username&quot; type=&quot;text&quot;&gt;</pre>
+
+<p>As with T4MVC, the MetaGen T4 template won't normally be run on code changes. <a href="https://github.com/bennor/AutoT4">AutoT4</a> is another Visual Studio extension that will force processing of any T4 template on project rebuild.</p>
+
+
+<h2>CSS Classes</h2>
+
+<p>Referring to your CSS classes can be another area where magic strings can really trip you up. Because it's so tempting to fine-tune stylesheets as you see problems, it's not unusual to accidentally remove or rename a CSS class that's being used from your view code. Thankfully there's a relatively easy way to use T4 to create a <code>static</code> class with <code>const</code> strings for all your CSS classes. This not only guards against accidental deletion or renaming, but also provides nice IntelliSense support when writing view code (and yes, Visual Studio can now scan CSS stylesheets and provides IntelliSense anyway so this last point is less important now).</p>
+
+<p>I don't have a particular library to point you towards for this one, but the T4 template is relatively simple and is included below. It's not perfect and will probably need to be tweaked for your particular stylesheet (this one is designed for the Bootstrap CSS files and is used from <a href="http://www.fluentbootstrap.com">FluentBootstrap</a>), but it should catch most of your CSS classes.</p>
+
+<pre class='prettyprint'>&lt;#@ template language=&quot;C#&quot; hostSpecific=&quot;true&quot; #&gt;
+&lt;#@ assembly name=&quot;System.Core&quot; #&gt; 
+&lt;#@ import namespace=&quot;System.Linq&quot; #&gt;
+&lt;#@ import namespace=&quot;System.Globalization&quot; #&gt;
+&lt;#@ import namespace=&quot;System.Collections.Generic&quot; #&gt;
+&lt;#@ import namespace=&quot;System.Text.RegularExpressions&quot; #&gt;
+&lt;# Process(); #&gt;
+&lt;#+
+	// Regex for CSS classes from http://paul.kinlan.me/regex-to-get-class-names-from-css-2-0/
+	readonly Regex regex = new Regex(@&quot;\.[-]?[_a-zA-Z][_a-zA-Z0-9-]*|[^\0-\177]*\\[0-9a-f]{1,6}(\r\n[ \n\r\t\f])?|\\[^\n\r\f0-9a-f]*&quot;, RegexOptions.Compiled);
+
+	// Regexes for removing comments from http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp/3524689#3524689
+	string blockComments = @&quot;/\*(.*?)\*/&quot;;
+	string lineComments = @&quot;//(.*?)\r?\n&quot;;
+	string strings = @&quot;&quot;&quot;((\\[^\n]|[^&quot;\n])*)&quot;&quot;&quot;;
+	string verbatimStrings = @&quot;@(&quot;&quot;[^&quot;&quot;]*&quot;&quot;)+&quot;;
+	TextInfo textInfo = CultureInfo.InvariantCulture.TextInfo;
+
+	public void Process()
+	{
+		WriteLine(&quot;namespace FluentBootstrap&quot;);
+		WriteLine(&quot;{&quot;);
+		WriteLine(&quot;\tpublic static class Css&quot;);
+		WriteLine(&quot;\t{&quot;);
+
+		// Read the CSS file and strip comments
+		string css = System.IO.File.ReadAllText(Host.ResolvePath(@&quot;Content\bootstrap.css&quot;));
+		css = css.Replace(&quot;\r\n&quot;, &quot;\n&quot;);
+		css = Regex.Replace(css,
+			blockComments + &quot;|&quot; + lineComments + &quot;|&quot; + strings + &quot;|&quot; + verbatimStrings,
+			me =&gt; {
+				if (me.Value.StartsWith(&quot;/*&quot;) || me.Value.StartsWith(&quot;//&quot;))
+					return me.Value.StartsWith(&quot;//&quot;) ? Environment.NewLine : &quot;&quot;;
+				// Keep the literal strings
+				return me.Value;
+			},
+			RegexOptions.Singleline);
+
+		// Get all CSS classes in the file (except for icons)
+		HashSet&lt;string&gt; cssClasses = new HashSet&lt;string&gt;();
+		foreach (Match match in regex.Matches(css))
+		{
+			if(match.Success &amp;&amp; !string.IsNullOrWhiteSpace(match.Groups[0].Value) &amp;&amp; !match.Groups[0].Value.StartsWith(@&quot;\&quot;) &amp;&amp; !match.Groups[0].Value.StartsWith(&quot;.glyphicon-&quot;))
+			{
+				cssClasses.Add(match.Groups[0].Value.Substring(1));	
+			}
+		}
+		// Separate alpha &amp; numeric portions for ordering http://stackoverflow.com/a/19288352/3042939
+		// Generate the const strings
+		foreach(string cssClass in cssClasses.OrderBy(x =&gt; new string(x.Where(char.IsLetter).ToArray()) + new string(x.Where(char.IsDigit).ToArray()).PadLeft(2, &#39;0&#39;) ))
+		{
+			WriteLine(&quot;\t\tpublic const string &quot; + String.Join(null, cssClass.Split(new char[]{&#39;-&#39;}, StringSplitOptions.RemoveEmptyEntries)
+				.Select(x =&gt; textInfo.ToTitleCase(x))) + &quot; = \&quot;&quot; + cssClass + &quot;\&quot;;&quot;);		
+		}
+
+		WriteLine(&quot;\t}&quot;);
+		WriteLine(&quot;}&quot;);
+	}
+#&gt;</pre>
+
+
+<h2>Icons and Icon Fonts</h2>
+
+<p>Icons are another area where CSS can come in handy, as long as your icons are declared in CSS as well. For a detailed post of how to do this, <a href="/posts/strongly-typed-icon-fonts-in-aspnet-mvc">see here</a>.</p>
+
+
+<h2>HTML Elements</h2>
+
+<p>You can even eliminate most HTML elements and rely on code to generate them instead. I'm not suggesting this is always a good idea. For example, there's really no reason why you should replace a simple <code>&lt;p&gt;</code> tag with code, but it can be helpful for more exotic HTML tags or when using a library like <a href="http://getbootstrap.com">Bootstrap</a>.</p>
+
+<p>There are several libraries to assist in generating HTML from your view code. For starters, native ASP.NET MVC contains a number of <code>HtmlHelper</code> extensions to generate form elements. In the third-party space, the <a href="http://mvc.fubu-project.org/">FubuMVC</a> project published <a href="https://github.com/DarthFubuMVC/htmltags">a library to create generic HTML elements via code</a>. There are also wrappers for common CSS frameworks like <a href="http://getbootstrap.com">Bootstrap</a> such as <a href="https://www.twitterbootstrapmvc.com/">TwitterBootstrapMVC</a> or my own <a href="http://www.fluentbootstrap.com">FluentBootstrap</a>. There is also planned support for tag-like syntax for code helpers in ASP.NET vNext via <a href="http://www.hanselman.com/blog/ASPNET5VNextWorkInProgressExploringTagHelpers.aspx">Tag Helpers</a>.</p>
+
+
+<h2>DIY</h2>
+
+<p>There is also a lot you can do in terms of best practice to eliminate magic strings. For example, try not to rely on dynamic objects if possible and use strongly-typed view models instead. <a href="http://lostechies.com/jimmybogard/2009/01/14/a-new-breed-of-magic-strings-in-asp-net-mvc/">Jimmy Bogard also has some good tips</a>.</p>
+
+
+<h2>nameof()</h2>
+
+<p>Finally, it looks like the compiler and language designers are recognizing some of the problems with certain kinds of magic strings. One of the features I'm most looking forward to in C# 6 is the introduction of <a href="http://www.codeproject.com/Articles/849265/What-s-new-in-Csharp-nameof-Expressions">a new <code>nameof()</code> expression</a>. It will return a string literal for any property and can help eliminate magic strings from error messages, validation checks, UI output, etc.</p></div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'eliminating-magic-strings';
+            var disqus_title = 'Eliminating Magic Strings in ASP.NET MVC';
+            var disqus_url = 'http://www.daveaglick.com/posts/eliminating-magic-strings';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+

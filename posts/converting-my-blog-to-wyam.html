@@ -1,0 +1,311 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Converting My Blog to Wyam</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Converting My Blog to Wyam" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/converting-my-blog-to-wyam" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Converting My Blog to Wyam</div>
+                <div class="lead">How I went from compiled to static in less than a day.</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/blog" class="btn btn-default btn-sm tag-button icon-tag-2"> blog</a>
+     <a role="button" href="/tags/meta" class="btn btn-default btn-sm tag-button icon-tag-2"> meta</a>
+     <a role="button" href="/tags/static-site-generator" class="btn btn-default btn-sm tag-button icon-tag-2"> static site generator</a>
+     <a role="button" href="/tags/wyam" class="btn btn-default btn-sm tag-button icon-tag-2"> Wyam</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Tuesday, July 7, 2015</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="converting-my-blog-to-wyam"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/converting-my-blog-to-wyam" data-via="daveaglick" data-text="Converting My Blog to Wyam" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12"><p>I <a href="/posts/announcing-wyam">recently launched a new static site generator</a>, and I figured what better test of whether it's ready for widespread use than to convert my entire blog to use it. Given that this blog was originally built with ASP.NET MVC, it should be a good fit for converting over to a Razor-based static site generator. The process was actually  easier than I thought it would be and suggests that <a href="http://wyam.io">Wyam</a> is already ready for production use on personal sites, blogs, etc.</p>
+<p>I went into the process with a few requirements:</p>
+<ul>
+<li>The rendered HTML had to match the original site. I wasn't interested in redesigning things at the same time I was converting the backend.</li>
+<li>I wanted to support Markdown documents as well as Razor pages (which was the only option before).</li>
+<li>The new site couldn't be more complex than the old site. For example, site layouts still had to be contained in a single file, etc.</li>
+</ul>
+<p>I also decided that I wanted to see if I could easily support an alternate development environment that didn't involve Visual Studio (since Visual Studio wouldn't have recognized the collection of files Wyam was reading as a normal web site project anyway). I took the opportunity to really dig in to <a href="https://code.visualstudio.com/">Visual Studio Code</a> and am happy to report I have fallen in love with it as a lightweight editing alternative when you don't need a full IDE. I also fired up Wyam in a console with the command <code>Wyam.exe --watch --preview</code> and left it running in the background while I worked. That way, any time I saved a file, the site would get regenerated and I could (almost) immediately preview it in a browser using the local Wyam web server.</p>
+<p>The first step was getting all the layout files to work. Because the <a href="http://wyam.io/modules/razor">Wyam Razor module</a> already supports the standard Razor layout file conventions, this mostly amounted to copying and pasting the layout and content files to the new site. Once I got the general layout working, I starting bringing over some of the non-blog pages (like <a href="/about">about</a> and <a href="/likes">likes</a>). These were originally Razor pages so I just left them that way. This is where I hit my first snag. The original site used a custom Razor base page to expose a page property that the views could use for easy access to <a href="http://fluentbootstrap.com">FluentBootstrap</a>. Getting <a href="http://fluentbootstrap.com">FluentBootstrap</a> into the static site wasn't hard as I had already developed a <a href="https://www.nuget.org/packages/FluentBootstrap.Wyam">NuGet package for this purpose</a>, but exposing the property so I didn't have to rewrite all my views turned out to be a challenge. To resolve this, I added support to the <a href="http://wyam.io/modules/razor">Wyam Razor module</a> for specifying base pages and then created my base page class right in the Wyam config file for the site:</p>
+<pre class="prettyprint"><code>public abstract class RazorPage : BaseRazorPage
+{
+  public WyamBootstrapHelper Bs
+  {
+    get { return Html.Bootstrap(); }
+  }
+}
+// ...
+Pipelines.Add(
+  // ...
+  Razor(typeof(RazorPage))
+  // ...
+);
+</code></pre>
+<p>Once I had the non-blog pages working, I moved on the blog posts. In the previous site each post specified it's metadata (like title, published date, etc.) by setting additional Razor page properties from the custom base class. In this case, I had a better mechanism for specifying metadata and used <a href="http://wyam.io/modules/yaml">YAML</a> <a href="http://wyam.io/modules/frontmatter">front matter</a> for the metadata. This required me to manually change the declarations at the top of each blog post from something like this:</p>
+<pre class="prettyprint"><code>@{
+    Title = &quot;Announcing LINQPad.CodeAnalysis&quot;;
+    Lead = &quot;.NET Compiler Platform helpers and utilities for LINQPad.&quot;;
+    Published = new DateTime(2015, 3, 18);
+    Tags = new[] { &quot;LINQPad&quot;, &quot;open source&quot;, &quot;Roslyn&quot;, &quot;.NET Compiler Platform&quot; };
+}
+</code></pre>
+<p>To something like this:</p>
+<pre class="prettyprint"><code>Title: Announcing LINQPad.CodeAnalysis
+Lead: .NET Compiler Platform helpers and utilities for LINQPad.
+Published: 3/18/2015
+Tags:
+  - LINQPad
+  - open source
+  - Roslyn
+  - .NET Compiler Platform
+---
+</code></pre>
+<p>It's a nice side benefit that the YAML is easier to read as well. This process took about an hour for all my posts.</p>
+<p>The last step was to convert over the more dynamic pages in the site, specifically the <a href="/posts">post archives</a> and <a href="/tags">list of tags</a> and cooresponding tag archives. For the post archive, I wrote a LINQ statement that used the Wyam metadata to fetch all the posts in the site:</p>
+<pre class="prettyprint"><code>@{
+  foreach(IGrouping&lt;int, IDocument&gt; year in Documents
+    .Where(x =&gt; x.ContainsKey(&quot;Published&quot;))
+    .OrderByDescending(x =&gt; x.Get&lt;DateTime&gt;(&quot;Published&quot;))
+    .GroupBy(x =&gt; x.Get&lt;DateTime&gt;(&quot;Published&quot;).Year)
+    .OrderByDescending(x =&gt; x.Key))
+  {
+    &lt;h3&gt;@year.Key&lt;/h3&gt;
+    // ...
+  }
+}
+</code></pre>
+<p>Then for the tags, I did something similar (this uses the special <code>ToLookup</code> extension for handling metadata lookup in Wyam):</p>
+<pre class="prettyprint"><code>@{    
+  var DocumentsByTag = Documents
+    .ContainsKey(&quot;Published&quot;)
+    .ToLookup&lt;string&gt;(&quot;Tags&quot;);
+}
+// ...
+@{
+  foreach (var tagDocuments in DocumentsByTag.OrderBy(x =&gt; x.Key))
+  {
+    // ...
+  }
+}
+</code></pre>
+<p>Finally, to generate the individual archive page for each tag, I added a special pipeline that outputs a page per tag:</p>
+<pre class="prettyprint"><code>Pipelines.Add(&quot;Tags&quot;,
+  ReadFiles(@&quot;tags\index.cshtml&quot;),
+  FrontMatter(),
+  Execute((doc, ctx) =&gt; ctx.Documents
+    .Where(x =&gt; x.ContainsKey(&quot;Published&quot;) &amp;&amp; x.ContainsKey(&quot;Tags&quot;))
+    .SelectMany(x =&gt; x.Get&lt;string[]&gt;(&quot;Tags&quot;))
+    .Distinct()
+    .Select(x =&gt; doc.Clone(new Dictionary&lt;string, object&gt;()
+    { 
+      { &quot;Title&quot;, x },
+      { &quot;Tag&quot;, x }
+    }))),
+  Razor(typeof(RazorPage)),
+  WriteFiles(x =&gt; HtmlHelperExtensions.GetTagLink(x.String(&quot;Tag&quot;)) + &quot;.html&quot;)
+);
+</code></pre>
+<p>In total, it probably took me about 6 hours to convert over the entire site. While it wasn't turn-key, that's not really the point anyway. I could have built the site from scratch on a site generator that prescribed a specific file convention, metadata, etc. but instead I was able to relativly easily adapt an existing, fairly complex site without too much trouble. That's the reason I built Wyam, to give developers a powerful tool to build exactly the content they want, the way they want to build it. Now it's <a href="http://wyam.io/knowledgebase/continuous-integration">building automatically from AppVeyor on every commit</a>, I can use <a href="http://wyam.io/modules/markdown">Markdown</a>, and it gets served lightning-fast for free from <a href="https://pages.github.com/">GitHub Pages</a>. If you're interested in doing something similar, <a href="https://github.com/daveaglick/daveaglick">check out the source code for this site</a> as an example. And please don't hesitate to ask here or on Twitter for help!</p>
+
+</div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'converting-my-blog-to-wyam';
+            var disqus_title = 'Converting My Blog to Wyam';
+            var disqus_url = 'http://www.daveaglick.com/posts/converting-my-blog-to-wyam';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+
