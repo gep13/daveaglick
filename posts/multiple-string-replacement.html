@@ -1,0 +1,406 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Multiple String Replacement</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/master.css" rel="stylesheet" />
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Multiple String Replacement" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/multiple-string-replacement" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+        <script>
+            WebFont.load({
+                google: {
+                    families: ['Lato:400,900:latin', 'Droid+Serif::latin']
+                },
+                custom: {
+                    families: ['daveaglick'],
+                    urls: ['https://fontastic.s3.amazonaws.com/gfxCC547kHqmQZtxrW5KFY/icons.css']
+                }
+            });
+        </script>
+	</head>
+	<body onload="prettyPrint()">
+
+<div id="page-wrapper">
+ <div class="container topnav container-sm-height">
+  <div class="row nav-row row-sm-height">
+   <div class="col-xs-3 col-sm-6 logo-col col-sm-height col-bottom">                        <a href="/">Dave Glick</a>
+</div>
+   <div class="col-xs-9 visible-xs-block">
+    <div class="visible-xs-block">                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".collapse">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+</div>
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-2 nav-col collapse col-sm-height" style="visibility: visible;">
+    <ul class="list-unstyled">
+     <li>/ <a href="/about"> About</a></li>
+     <li>/ <a href="/posts"> Archive</a></li>
+     <li>/ <a href="/tags"> Tags</a></li>
+     <li>/ <a href="/likes"> Likes</a></li>
+    </ul>                        <a class="twitter-follow-button" href="https://twitter.com/daveaglick" data-show-count="false" data-lang="en">Follow @daveaglick</a>
+
+   </div>
+   <div class="clearfix visible-xs-block"></div>
+   <div class="col-xs-12 col-sm-4 proj-col collapse col-sm-height" style="visibility: visible;">
+    <div>Projects</div>
+    <ul class="list-unstyled">
+     <li>/ <a href="http://wyam.io">Wyam</a></li>
+     <li>/ <a href="http://fluentbootstrap.com">FluentBootstrap</a></li>
+     <li>/ <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a></li>
+     <li>/ <a href="/razordatabase">RazorDatabase</a></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div id="body-content" class="container">
+  <div class="row">
+   <div class="col-md-12">
+
+
+
+<div class="banner container-sm-height">
+ <div class="row row-sm-height">
+  <div class="col-sm-8 col-sm-height col-bottom">            <div class="title">Multiple String Replacement</div>
+                <div class="lead">Strings are hard.</div>
+</div>
+  <div class="col-sm-4 col-sm-height col-bottom stats">
+   <div class="row">
+    <div class="col-sm-12">                    <hr class="visible-xs-block" />
+                        <div><strong>Tags</strong></div>
+                        <div>
+
+     <a role="button" href="/tags/algorithms" class="btn btn-default btn-sm tag-button icon-tag-2"> algorithms</a>
+     <a role="button" href="/tags/strings" class="btn btn-default btn-sm tag-button icon-tag-2"> strings</a>                        </div>     
+                        <div><strong>Published</strong></div>
+                        <div class="icon-calendar"> &nbsp;Monday, August 24, 2015</div>
+                    <div><strong>Comments</strong></div>
+                    <div class="icon-talk-chat-2"> &nbsp;<a href="#disqus_thread" data-disqus-identifier="multiple-string-replacement"></a></div>               
+                    <div><a class="twitter-share-button" href="https://twitter.com/share" data-url="http://www.daveaglick.com/posts/multiple-string-replacement" data-via="daveaglick" data-text="Multiple String Replacement" data-count="none">Tweet</a></div>
+
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<hr />
+
+<div class="row">
+ <div id="post-content" class="col-sm-12"><p>I recently had a need to make multiple string replacements in a target string at the same time. This turned out to be much more difficult that I anticipated, so I'm going to share my results in the hopes of saving someone else from going down this rabbit hole.</p>
+<p>Let's assume that the string I need to make replacements in is:</p>
+<pre class="prettyprint"><code>the toboggan rushed to the uneaten foobaz ham and cheese
+</code></pre>
+<p>Let's also assume that these are my replacements:</p>
+<table class="table">
+  <tr><th>Search For</th><th>Replace With</th></tr>
+  <tr><td>toboggan</td><td>toward</td></tr>
+  <tr><td>to</td><td>toil</td></tr>
+  <tr><td>eat</td><td>froz</td></tr>
+  <tr><td>uneated</td><td>bar</td></tr>
+  <tr><td>foo</td><td>afoob</td></tr>
+  <tr><td>foobar</td><td>afoobarb</td></tr>
+  <tr><td>cheese</td><td>beer</td></tr>
+</table>
+<p>My final string should be:</p>
+<pre class="prettyprint"><code>the toward rushed toil the unfrozen afoobbaz ham and beer
+</code></pre>
+<p>It's all nonsense, but helps to illustrate several pitfalls of multiple string replacement.</p>
+<h2>Attempt 1: Multiple Replace Calls</h2>
+<p>A first attempt was made to sort the search strings in descending order and then perform multiple <code>string.Replace(...)</code> calls:</p>
+<pre class="prettyprint"><code>public static string Replace(string s, IDictionary&lt;string, string&gt; map)
+{
+    foreach(KeyValuePair&lt;string, string&gt; item in map.OrderByDescending(x =&gt; x.Key.Length))
+    {
+        s = s.Replace(item.Key, item.Value);
+    }
+    return s;
+}
+</code></pre>
+<p>This produced the output:</p>
+<pre class="prettyprint"><code>the toilward rushed toil the unfrozen afoobbaz ham and beer
+</code></pre>
+<p>You can see that this isn't quite right. The main problem is that if any mapping key is a substring of a longer previously mapped value, the replaced value will get replaced again by the shorter match.</p>
+<h2>Attempt 2: Substitution Tokens</h2>
+<p>So if the problem in my first attempt was that I was replacing the replacement values on subsiquent <code>string.Replace(...)</code> calls, then one solution would be to iterate twice. The first time through, replace the search strings with unique tokens. Then the second time through, replace the tokens with the actual replacement value.</p>
+<pre class="prettyprint"><code>public static string Replace(string s, IDictionary&lt;string, string&gt; map)
+{
+    // It doesn't matter what this is as long as it's unique
+    string token = &quot;aca13231-307a-4fd0-b859-d603c6d45360&quot;;
+    
+    // Do the first set of replacements
+    Dictionary&lt;string, string&gt; tokens = new Dictionary&lt;string, string&gt;();
+    int c = 0;
+    foreach(KeyValuePair&lt;string, string&gt; item in map)
+    {
+        string tokensKey = token + &quot;-&quot; + c;
+        s = s.Replace(item.Key, tokensKey);
+        tokens[tokensKey] = item.Value;
+        c++;
+    }
+    
+    // Now replace the tokens
+    foreach(KeyValuePair&lt;string, string&gt; item in tokens)
+    {
+        s = s.Replace(item.Key, item.Value);
+    }   
+    
+    return s;
+}
+</code></pre>
+<p>This works and returns the correct result, but yech. We can do better.</p>
+<h2>Attempt 3: Replacement Search Tree</h2>
+<p>I hopped on Twitter and asked if anyone had seen or worked on this problem before and got a really helpful response from <a href="https://twitter.com/djnemec">D Nemec</a>. He provided a link to a gist he wrote that contained an implementation of a tree that could be used to search for replacement strings by descending one character at a time. It worked great for simple sets of replacements, but didn't account for cases where you start going down one branch of the tree only to discover that it doesn't match when a shorter branch would have. It also had some problems at the end of the search string. I hacked on it a little bit and came up with this working implementation:</p>
+<pre class="prettyprint"><code>public static string Replace(string s, IDictionary&lt;string, string&gt; map)
+{
+    Trie&lt;char&gt; lookup = new Trie&lt;char&gt;(map.Keys);
+    StringBuilder builder = new StringBuilder();
+    int lastIdx = -1;
+    Trie&lt;char&gt;.Node lastNode = lookup.Root;
+    int matchIdx = -1;
+    HashSet&lt;Trie&lt;char&gt;.Node&gt; badMatches = new HashSet&lt;Trie&lt;char&gt;.Node&gt;();
+    for (int i = 0; i &lt; s.Length + 1; i++)
+    {
+        if (i &lt; s.Length)
+        {
+            char chr = s[i];
+            if (lastNode.HasNext(chr))
+            {
+                // Partial match
+                Trie&lt;char&gt;.Node matchNode = lastNode.Children[chr];
+                if (!badMatches.Contains(matchNode))
+                {
+                    lastNode = matchNode;
+                    if (matchIdx == -1)
+                    {
+                        matchIdx = i;
+                    }
+                    continue;
+                }
+            }
+        }
+
+        if (lastNode.IsRoot)
+        {
+            // Complete match
+            string key = new string(lastNode.Cumulative.ToArray());
+            builder.Append(map[key]);
+            lastIdx = i - 1;
+        }
+        else
+        {
+            // No match
+            if (matchIdx != -1)
+            {
+                // Backtrack to the last match start and don't consider this match
+                i = matchIdx - 1;
+                matchIdx = -1;
+                badMatches.Add(lastNode);
+                lastNode = lookup.Root;
+                continue;
+            }
+            builder.Append(i &lt; s.Length ? s.Substring(lastIdx + 1, i - lastIdx) : s.Substring(lastIdx + 1));
+            lastIdx = i;
+        }
+        badMatches.Clear();
+        matchIdx = -1;
+        lastNode = lookup.Root;
+    }
+    return builder.ToString();
+}
+
+private class Trie&lt;T&gt; where T : IComparable&lt;T&gt;
+{
+    public Node Root { get; }
+
+    public Trie(IEnumerable&lt;IEnumerable&lt;T&gt;&gt; elems)
+    {
+        Root = new Node(new T[0]);
+        foreach (var elem in elems)
+        {
+            LoadSingle(elem);
+        }
+    }
+
+    private void LoadSingle(IEnumerable&lt;T&gt; word)
+    {
+        Node lastNode = Root;
+        foreach (var chr in word)
+        {
+            Node node;
+            if (!lastNode.Children.TryGetValue(chr, out node))
+            {
+                node = new Node(lastNode.Cumulative.Concat(new[] { chr }));
+                lastNode.Children[chr] = node;
+            }
+            lastNode = node;
+        }
+        lastNode.IsRoot = true;
+    }
+
+    public class Node
+    {
+        public IEnumerable&lt;T&gt; Cumulative { get; }
+        public bool IsRoot { get; set; }
+        public IDictionary&lt;T, Node&gt; Children { get; }
+
+        public bool HasNext(T elem)
+        {
+            return Children.Keys.Any(k =&gt; k.Equals(elem));
+        }
+
+        public Node(IEnumerable&lt;T&gt; cumulative)
+        {
+            Cumulative = cumulative;
+            Children = new Dictionary&lt;T, Node&gt;();
+        }
+    }
+}
+</code></pre>
+<p>This works as intended. I also discovered some other edge cases while working on it:</p>
+<pre class="prettyprint"><code>the toboggan rushed to the uneaten foobaz ham and cheesey
+</code></pre>
+<p>Should become:</p>
+<pre class="prettyprint"><code>the toward rushed toil the unfrozen afoobbaz ham and beery
+</code></pre>
+<p>And:</p>
+<pre class="prettyprint"><code>the toboggan rushed to the uneaten fooba
+</code></pre>
+<p>Should become:</p>
+<pre class="prettyprint"><code>the toward rushed toil the unfrozen afoobba
+</code></pre>
+<h2>Performance</h2>
+<p>One final note is about the performance of the two different working algorithms. One might think that the tree-based approach is faster given that it doesn't do multiple iteration and relies on a <code>StringBuilder</code> to build the result (instead of multiple string assignments). However, you should never assume a specific performance profile and instead rely on benchmarking. When evaulating against the short samples given above, the token-based replacement algotihm is actually about 3 to 4 times faster than the tree-based one. My guess is that this is due to compiler optimizations on string assignments and the fact that the search string was very short. Figuring out exactly what's going on is a blog post for another day, but it's a lesson that you should always benchmark performance-critical code.</p>
+<p>So, have I missed any multiple replacement string algorithms? Can you think of any improvements to the ones I've presented?</p>
+
+</div>
+</div>
+<hr />
+
+<div class="row">
+ <div class="col-sm-12">        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+            var disqus_identifier = 'multiple-string-replacement';
+            var disqus_title = 'Multiple String Replacement';
+            var disqus_url = 'http://www.daveaglick.com/posts/multiple-string-replacement';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+</div>
+</div></div>
+  </div>
+ </div>
+</div>        
+<div id="sticky-footer-wrapper">
+ <div id="sticky-footer">
+  <div class="container">
+   <small>                        
+                            Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a
+                            <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">
+    <span class="icon-creative-commons"></span> Creative Commons Attribution 4.0 International License</a>.
+                            <br />
+                            <a href="/feed.rss">
+    <span class="icon-rss"></span> RSS Feed</a> | <a href="/feed.atom">
+    <span class="icon-rss"></span> Atom Feed</a>
+                            <br />
+                            <a href="https://github.com/daveaglick/daveaglick">
+    <span class="icon-github-square"></span> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                        
+
+   </small>
+  </div>
+ </div>
+</div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+
+            // Google Analytics
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-54470483-1', 'auto');
+            ga('send', 'pageview');
+
+            // Twitter
+            window.twttr = (function (d, s, id) {
+                var t, js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://platform.twitter.com/widgets.js";
+                fjs.parentNode.insertBefore(js, fjs);
+                return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+            }(document, "script", "twitter-wjs"));
+
+            // Background
+            var colors = Please.make_color({
+                golden: false,
+                colors_returned: 3,
+                saturation: .4
+            });
+            var t = new Trianglify({
+                x_gradient: colors,
+                y_gradient: ["#FFFFFF"]
+            });
+            var pattern = t.generate(document.body.clientWidth, document.body.clientHeight);
+            document.body.setAttribute('style', 'background-image: ' + pattern.dataUrl);
+        </script>
+	</bodyonload="prettyPrint()">
+</html>
+

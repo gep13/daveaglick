@@ -1,5 +1,191 @@
 
-<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/linqpad-codeanalysis-is-now-part-of-linqpad</guid><link>http://daveaglick.com/posts/linqpad-codeanalysis-is-now-part-of-linqpad</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>LINQPad.CodeAnalysis Is Now Part Of LINQPad</title><description>&lt;p&gt;Just a quick note that most of the functionality in &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;LINQPad.CodeAnalysis&lt;/a&gt; can now be found in &lt;a href="https://www.linqpad.net/Download.aspx#beta5"&gt;LINQPad 5 (as of 5.02 beta)&lt;/a&gt;. When using LINQPad 5, the syntax tree and syntax visualizer are both found under the "Tree" tab after executing a query. This tab is available for any query and you can also dump a &lt;code&gt;SyntaxTree&lt;/code&gt; or &lt;code&gt;SyntaxNode&lt;/code&gt; explicitly by calling &lt;code&gt;.DumpSyntaxTree()&lt;/code&gt; or &lt;code&gt;.DumpSyntaxNode()&lt;/code&gt;. The integration in LINQPad 5 is also tighter than a plugin allows and lets you highlight the original query as you highlight nodes in the syntax tree as well as other UI improvements. I'd like to thank Joseph Albahari for making this integration possible and for tweaking things to provide the best possible experience:&lt;/p&gt;
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0"><channel xml:base="http://daveaglick.com/"><title>Dave Glick</title><description>Latest blog posts by Dave Glick</description><a10:link href="http://daveaglick.com/" /><item><guid isPermaLink="true">http://daveaglick.com/posts/multiple-string-replacement</guid><link>http://daveaglick.com/posts/multiple-string-replacement</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Multiple String Replacement - Strings are hard.</title><description>&lt;p&gt;I recently had a need to make multiple string replacements in a target string at the same time. This turned out to be much more difficult that I anticipated, so I'm going to share my results in the hopes of saving someone else from going down this rabbit hole.&lt;/p&gt;
+&lt;p&gt;Let's assume that the string I need to make replacements in is:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toboggan rushed to the uneaten foobaz ham and cheese
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let's also assume that these are my replacements:&lt;/p&gt;
+&lt;table class="table"&gt;
+  &lt;tbody&gt;&lt;tr&gt;&lt;th&gt;Search For&lt;/th&gt;&lt;th&gt;Replace With&lt;/th&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;toboggan&lt;/td&gt;&lt;td&gt;toward&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;to&lt;/td&gt;&lt;td&gt;toil&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;eat&lt;/td&gt;&lt;td&gt;froz&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;uneated&lt;/td&gt;&lt;td&gt;bar&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;foo&lt;/td&gt;&lt;td&gt;afoob&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;foobar&lt;/td&gt;&lt;td&gt;afoobarb&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;cheese&lt;/td&gt;&lt;td&gt;beer&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
+&lt;p&gt;My final string should be:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toward rushed toil the unfrozen afoobbaz ham and beer
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It's all nonsense, but helps to illustrate several pitfalls of multiple string replacement.&lt;/p&gt;
+&lt;h2&gt;Attempt 1: Multiple Replace Calls&lt;/h2&gt;
+&lt;p&gt;A first attempt was made to sort the search strings in descending order and then perform multiple &lt;code&gt;string.Replace(...)&lt;/code&gt; calls:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public static string Replace(string s, IDictionary&amp;lt;string, string&amp;gt; map)
+{
+    foreach(KeyValuePair&amp;lt;string, string&amp;gt; item in map.OrderByDescending(x =&amp;gt; x.Key.Length))
+    {
+        s = s.Replace(item.Key, item.Value);
+    }
+    return s;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This produced the output:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toilward rushed toil the unfrozen afoobbaz ham and beer
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can see that this isn't quite right. The main problem is that if any mapping key is a substring of a longer previously mapped value, the replaced value will get replaced again by the shorter match.&lt;/p&gt;
+&lt;h2&gt;Attempt 2: Substitution Tokens&lt;/h2&gt;
+&lt;p&gt;So if the problem in my first attempt was that I was replacing the replacement values on subsiquent &lt;code&gt;string.Replace(...)&lt;/code&gt; calls, then one solution would be to iterate twice. The first time through, replace the search strings with unique tokens. Then the second time through, replace the tokens with the actual replacement value.&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public static string Replace(string s, IDictionary&amp;lt;string, string&amp;gt; map)
+{
+    // It doesn't matter what this is as long as it's unique
+    string token = "aca13231-307a-4fd0-b859-d603c6d45360";
+    
+    // Do the first set of replacements
+    Dictionary&amp;lt;string, string&amp;gt; tokens = new Dictionary&amp;lt;string, string&amp;gt;();
+    int c = 0;
+    foreach(KeyValuePair&amp;lt;string, string&amp;gt; item in map)
+    {
+        string tokensKey = token + "-" + c;
+        s = s.Replace(item.Key, tokensKey);
+        tokens[tokensKey] = item.Value;
+        c++;
+    }
+    
+    // Now replace the tokens
+    foreach(KeyValuePair&amp;lt;string, string&amp;gt; item in tokens)
+    {
+        s = s.Replace(item.Key, item.Value);
+    }   
+    
+    return s;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This works and returns the correct result, but yech. We can do better.&lt;/p&gt;
+&lt;h2&gt;Attempt 3: Replacement Search Tree&lt;/h2&gt;
+&lt;p&gt;I hopped on Twitter and asked if anyone had seen or worked on this problem before and got a really helpful response from &lt;a href="https://twitter.com/djnemec"&gt;D Nemec&lt;/a&gt;. He provided a link to a gist he wrote that contained an implementation of a tree that could be used to search for replacement strings by descending one character at a time. It worked great for simple sets of replacements, but didn't account for cases where you start going down one branch of the tree only to discover that it doesn't match when a shorter branch would have. It also had some problems at the end of the search string. I hacked on it a little bit and came up with this working implementation:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;public static string Replace(string s, IDictionary&amp;lt;string, string&amp;gt; map)
+{
+    Trie&amp;lt;char&amp;gt; lookup = new Trie&amp;lt;char&amp;gt;(map.Keys);
+    StringBuilder builder = new StringBuilder();
+    int lastIdx = -1;
+    Trie&amp;lt;char&amp;gt;.Node lastNode = lookup.Root;
+    int matchIdx = -1;
+    HashSet&amp;lt;Trie&amp;lt;char&amp;gt;.Node&amp;gt; badMatches = new HashSet&amp;lt;Trie&amp;lt;char&amp;gt;.Node&amp;gt;();
+    for (int i = 0; i &amp;lt; s.Length + 1; i++)
+    {
+        if (i &amp;lt; s.Length)
+        {
+            char chr = s[i];
+            if (lastNode.HasNext(chr))
+            {
+                // Partial match
+                Trie&amp;lt;char&amp;gt;.Node matchNode = lastNode.Children[chr];
+                if (!badMatches.Contains(matchNode))
+                {
+                    lastNode = matchNode;
+                    if (matchIdx == -1)
+                    {
+                        matchIdx = i;
+                    }
+                    continue;
+                }
+            }
+        }
+
+        if (lastNode.IsRoot)
+        {
+            // Complete match
+            string key = new string(lastNode.Cumulative.ToArray());
+            builder.Append(map[key]);
+            lastIdx = i - 1;
+        }
+        else
+        {
+            // No match
+            if (matchIdx != -1)
+            {
+                // Backtrack to the last match start and don't consider this match
+                i = matchIdx - 1;
+                matchIdx = -1;
+                badMatches.Add(lastNode);
+                lastNode = lookup.Root;
+                continue;
+            }
+            builder.Append(i &amp;lt; s.Length ? s.Substring(lastIdx + 1, i - lastIdx) : s.Substring(lastIdx + 1));
+            lastIdx = i;
+        }
+        badMatches.Clear();
+        matchIdx = -1;
+        lastNode = lookup.Root;
+    }
+    return builder.ToString();
+}
+
+private class Trie&amp;lt;T&amp;gt; where T : IComparable&amp;lt;T&amp;gt;
+{
+    public Node Root { get; }
+
+    public Trie(IEnumerable&amp;lt;IEnumerable&amp;lt;T&amp;gt;&amp;gt; elems)
+    {
+        Root = new Node(new T[0]);
+        foreach (var elem in elems)
+        {
+            LoadSingle(elem);
+        }
+    }
+
+    private void LoadSingle(IEnumerable&amp;lt;T&amp;gt; word)
+    {
+        Node lastNode = Root;
+        foreach (var chr in word)
+        {
+            Node node;
+            if (!lastNode.Children.TryGetValue(chr, out node))
+            {
+                node = new Node(lastNode.Cumulative.Concat(new[] { chr }));
+                lastNode.Children[chr] = node;
+            }
+            lastNode = node;
+        }
+        lastNode.IsRoot = true;
+    }
+
+    public class Node
+    {
+        public IEnumerable&amp;lt;T&amp;gt; Cumulative { get; }
+        public bool IsRoot { get; set; }
+        public IDictionary&amp;lt;T, Node&amp;gt; Children { get; }
+
+        public bool HasNext(T elem)
+        {
+            return Children.Keys.Any(k =&amp;gt; k.Equals(elem));
+        }
+
+        public Node(IEnumerable&amp;lt;T&amp;gt; cumulative)
+        {
+            Cumulative = cumulative;
+            Children = new Dictionary&amp;lt;T, Node&amp;gt;();
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This works as intended. I also discovered some other edge cases while working on it:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toboggan rushed to the uneaten foobaz ham and cheesey
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Should become:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toward rushed toil the unfrozen afoobbaz ham and beery
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toboggan rushed to the uneaten fooba
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Should become:&lt;/p&gt;
+&lt;pre class="prettyprint"&gt;&lt;code&gt;the toward rushed toil the unfrozen afoobba
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2&gt;Performance&lt;/h2&gt;
+&lt;p&gt;One final note is about the performance of the two different working algorithms. One might think that the tree-based approach is faster given that it doesn't do multiple iteration and relies on a &lt;code&gt;StringBuilder&lt;/code&gt; to build the result (instead of multiple string assignments). However, you should never assume a specific performance profile and instead rely on benchmarking. When evaulating against the short samples given above, the token-based replacement algotihm is actually about 3 to 4 times faster than the tree-based one. My guess is that this is due to compiler optimizations on string assignments and the fact that the search string was very short. Figuring out exactly what's going on is a blog post for another day, but it's a lesson that you should always benchmark performance-critical code.&lt;/p&gt;
+&lt;p&gt;So, have I missed any multiple replacement string algorithms? Can you think of any improvements to the ones I've presented?&lt;/p&gt;
+
+</description><pubDate>Mon, 24 Aug 2015 00:00:00 Z</pubDate><a10:updated>2015-08-24T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/linqpad-codeanalysis-is-now-part-of-linqpad</guid><link>http://daveaglick.com/posts/linqpad-codeanalysis-is-now-part-of-linqpad</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>LINQPad.CodeAnalysis Is Now Part Of LINQPad</title><description>&lt;p&gt;Just a quick note that most of the functionality in &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;LINQPad.CodeAnalysis&lt;/a&gt; can now be found in &lt;a href="https://www.linqpad.net/Download.aspx#beta5"&gt;LINQPad 5 (as of 5.02 beta)&lt;/a&gt;. When using LINQPad 5, the syntax tree and syntax visualizer are both found under the "Tree" tab after executing a query. This tab is available for any query and you can also dump a &lt;code&gt;SyntaxTree&lt;/code&gt; or &lt;code&gt;SyntaxNode&lt;/code&gt; explicitly by calling &lt;code&gt;.DumpSyntaxTree()&lt;/code&gt; or &lt;code&gt;.DumpSyntaxNode()&lt;/code&gt;. The integration in LINQPad 5 is also tighter than a plugin allows and lets you highlight the original query as you highlight nodes in the syntax tree as well as other UI improvements. I'd like to thank Joseph Albahari for making this integration possible and for tweaking things to provide the best possible experience:&lt;/p&gt;
 &lt;p&gt;&lt;img src="/Content/posts/linqpad5.png" alt="LINQPad 5" class="img-responsive" style="margin-top: 6px; margin-bottom: 6px;"&gt;&lt;/p&gt;
 &lt;p&gt;Unless you're using an older version of LINQPad (such as one of the version 4 betas 4.56.04 or higher) or want access to semantic information from the syntax tree (which isn't included in the new integration), I recommend relying on the integrated native to LINQPad.&lt;/p&gt;
 
@@ -529,154 +715,4 @@ namespace Wyam.Core.Modules
 
 &lt;img src="/Content/posts/syntax-tree.png" class="img-responsive"&gt;
 
-&lt;p&gt;More information including installation and usage instructions is available at &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;https://github.com/daveaglick/LINQPad.CodeAnalysis&lt;/a&gt;&lt;/p&gt;</description><pubDate>Wed, 18 Mar 2015 00:00:00 Z</pubDate><a10:updated>2015-03-18T00:00:00Z</a10:updated></item><item><guid isPermaLink="true">http://daveaglick.com/posts/compiler-platform-scripting</guid><link>http://daveaglick.com/posts/compiler-platform-scripting</link><a10:author><a10:name>Dave Glick</a10:name></a10:author><title>Introduction to Scripting with the .NET Compiler Platform (Roslyn) - So easy a caveman can do it.</title><description>
-&lt;p&gt;Scripting support in the .NET Compiler Platform (formerly known as Roslyn) has been a long time coming. It was originally introduced more than a year ago and then removed while the team considered what the ideal API should look like. It was recently reintroduced into the &lt;a href="https://github.com/dotnet/roslyn/tree/master/src/Scripting"&gt;master source branch on GitHub&lt;/a&gt;, though as of this blog post it still isn't available on the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;. In this post I will explain how to obtain and build the new scripting bits (including on a system without Visual Studio 2015 - it can actually be built using only Visual Studio 2013), introduce some of the scripting functionality, and show some scenarios where this might be helpful in your own applications. I also want to caveat this post by saying that it may go out of date quickly. The .NET Compiler Platform is under heavy development and it is changing frequently, including the public API. While I wouldn't expect any sweeping changes in the scripting support at this point, many of the details are subject to change.&lt;/p&gt;
-
-
-&lt;h2&gt;Obtaining and Building&lt;/h2&gt;
-
-&lt;p&gt;Since the scripting support isn't available in one of the binary distribution channels like the &lt;a href="https://www.myget.org/gallery/roslyn-nightly"&gt;nightly MyGet feed&lt;/a&gt; or on &lt;a href="https://www.nuget.org/profiles/RoslynTeam"&gt;NuGet&lt;/a&gt;, you'll need to obtain and build the .NET Compiler Platform from source in order to use them. Luckily the development team has been working hard to ensure this part is straightforward. The first step is to clone the &lt;a href="https://github.com/dotnet/roslyn"&gt;repository from GitHub&lt;/a&gt; using the following command (or your favorite Git GUI): 
-&lt;code&gt;git clone https://github.com/dotnet/roslyn.git&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The readme file says that to build the libraries you'll need Visual Studio 2015, but that's not actually true. You can build the .NET Compiler Platform just fine with only Visual Studio 2013 using the special 
-&lt;code&gt;Roslyn2013.sln&lt;/code&gt; solution file they've provided. In fact, it's just a simple two-command process. Make sure to run these commands from a Visual Studio command prompt. First you have to restore the NuGet packages and then build the solution. You might get some warnings about missing FxCop, but those are safe to ignore. From the 
-&lt;code&gt;\src&lt;/code&gt; directory in the repository run:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;powershell .nuget\NuGetRestore.ps1
-msbuild Roslyn2013.sln&lt;/pre&gt;
-
-&lt;p&gt;This will compile a bunch of libraries to the 
-&lt;code&gt;\Binaries\Debug&lt;/code&gt; directory. You don't need all of them for scripting. Assuming you want to script in C#, the libraries you need are:&lt;/p&gt;
-
-
-&lt;ul class="p"&gt;
- &lt;li&gt;Microsoft.CodeAnalysis&lt;/li&gt;
- &lt;li&gt;Microsoft.CodeAnalysis.CSharp&lt;/li&gt;
- &lt;li&gt;Microsoft.CodeAnalysis.Desktop&lt;/li&gt;
- &lt;li&gt;Microsoft.CodeAnalysis.CSharp.Desktop&lt;/li&gt;
- &lt;li&gt;Microsoft.CodeAnalysis.Scripting&lt;/li&gt;
- &lt;li&gt;Microsoft.CodeAnalysis.Scripting.CSharp&lt;/li&gt;
- &lt;li&gt;System.Collections.Immutable&lt;/li&gt;
- &lt;li&gt;System.Reflection.Metadata&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;I also ran into a problem with 
-&lt;code&gt;VBCSCompiler.exe&lt;/code&gt; crashing during the build, which appears like it might be related to &lt;a href="https://github.com/dotnet/roslyn/issues/110"&gt;this issue&lt;/a&gt;. In any case, upgrading to the latest .NET 4.5.2 runtime resolved my problem. Of course, if you have Visual Studio 2015 installed you can also try building the other 
-&lt;code&gt;Roslyn.sln&lt;/code&gt; solution.&lt;/p&gt;
-
-
-&lt;h2&gt;Your First Script&lt;/h2&gt;
-
-&lt;p&gt;Writing a simple script in the .NET Compiler Platform is really easy. For the remainder of this post I will discuss scripting in C#. There is a nearly identical API for scripting in Visual Basic if that's your thing. The 
-&lt;code&gt;CSharpScript&lt;/code&gt; class has a bunch of static methods that provide a good entry point to the API. Perhaps the most straightforward of these is 
-&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; which will evaluate C# statements and return a result. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;var value = CSharpScript.Eval("1 + 2");
-Console.Write(value); // 3&lt;/pre&gt;
-
-&lt;p&gt;This returns an 
-&lt;code&gt;int&lt;/code&gt; with a value of 
-&lt;code&gt;3&lt;/code&gt;. See, easy right? If you want more control, there's also 
-&lt;code&gt;CSharpScript.Create()&lt;/code&gt; which returns a 
-&lt;code&gt;CSharpScript&lt;/code&gt; object suitable for further manipulation before evaluation and 
-&lt;code&gt;CSharpScript.Run()&lt;/code&gt; which evaluates the script and returns a 
-&lt;code&gt;ScriptState&lt;/code&gt; object with the return value and other state information useful for REPL scenarios.&lt;/p&gt;
-
-
-&lt;h2&gt;Getting Variables&lt;/h2&gt;
-
-&lt;p&gt;As you saw above, it's easy to get the return value from the script using the 
-&lt;code&gt;CSharpScript.Eval()&lt;/code&gt; method. But what about other variables that get created during evaluation? We can get those as well by using the 
-&lt;code&gt;ScriptState&lt;/code&gt; object you get back from calling 
-&lt;code&gt;CSharpScript.Run()&lt;/code&gt;. It contains a member called 
-&lt;code&gt;Variables&lt;/code&gt; (of type 
-&lt;code&gt;ScriptVariables&lt;/code&gt;) that enumerates 
-&lt;code&gt;ScriptVariable&lt;/code&gt; objects with the name, type, and value for each variable the script created. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int c = 1 + 2;");
-var value = state.Variables["c"].Value;
-Console.Write(value); // 3&lt;/pre&gt;
-
-
-&lt;h2&gt;References and Namespaces&lt;/h2&gt;
-
-&lt;p&gt;If you want to do anything reasonably advanced, you'll probably need to include references and import namespaces for additional assemblies. Thankfully this is also really easy. There are a number of ways to do it, but the easiest is to use a 
-&lt;code&gt;ScriptOptions&lt;/code&gt; object which is accepted by any of the three 
-&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The default 
-&lt;code&gt;ScriptOptions&lt;/code&gt; includes the 
-&lt;code&gt;System&lt;/code&gt; assembly and namespace and will search for additional assemblies in the current runtime directory. To modify this, start with 
-&lt;code&gt;ScriptOptions.Default&lt;/code&gt; and use it's fluent interface to setup additional references and namespaces (you can also create your own 
-&lt;code&gt;ScriptOptions&lt;/code&gt; if you don't want the default 
-&lt;code&gt;System&lt;/code&gt; assembly and namespace). Use 
-&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; to add references and 
-&lt;code&gt;ScriptOptions.AddNamespaces()&lt;/code&gt; to add namespaces (there are also several variations on these methods). 
-&lt;code&gt;ScriptOptions.AddReferences()&lt;/code&gt; accepts a variety of different ways of referring to assemblies, including the .NET Compiler Platform type 
-&lt;code&gt;MetadataReference&lt;/code&gt; if you're used to using that from the other portions of the platform. Here is an example of including 
-&lt;code&gt;System.IO&lt;/code&gt; support in a script:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
-	.AddReferences(Assembly.GetAssembly(typeof(Path)))
-	.AddNamespaces("System.IO");
-var value = CSharpScript.Eval(@"Path.Combine(""A"", ""B"")", options);
-Console.Write(value); // A\B&lt;/pre&gt;
-
-
-&lt;h3&gt;Dynamic Support&lt;/h3&gt;
-
-&lt;p&gt;Getting support for 
-&lt;code&gt;dynamic&lt;/code&gt; in your script can be a challenge if only because it's not obvious which assemblies need to be referenced to support it. The answer is that you need 
-&lt;code&gt;System.Core&lt;/code&gt; and 
-&lt;code&gt;Microsoft.CSharp&lt;/code&gt;. That's all that's strictly needed, but if you also want support for 
-&lt;code&gt;ExpandoObject&lt;/code&gt; you'll need an extra reference and namespace support for 
-&lt;code&gt;System.Dynamic&lt;/code&gt;. Here is an example script with 
-&lt;code&gt;dynamic&lt;/code&gt; support (note that there's no magic to the types I pass to 
-&lt;code&gt;Assembly.GetAssembly()&lt;/code&gt;; these just happen to be types I know are defined in the required assemblies). Note also that I had to use 
-&lt;code&gt;CSharpScript.Run()&lt;/code&gt; since you can't directly return values from a script so I had to store my value in a variable and get it from the 
-&lt;code&gt;ScriptState&lt;/code&gt; object as we saw earlier.&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;ScriptOptions options = ScriptOptions.Default
-	.AddReferences(
-		Assembly.GetAssembly(typeof(System.Dynamic.DynamicObject)),  // System.Code
-		Assembly.GetAssembly(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo)),  // Microsoft.CSharp
-		Assembly.GetAssembly(typeof(System.Dynamic.ExpandoObject)))  // System.Dynamic
-	.AddNamespaces("System.Dynamic");
-ScriptState state = CSharpScript.Run(@"
-	dynamic dyn = new ExpandoObject();
-	dyn.Five = 5;
-	var value = dyn.Five;", options);
-Console.Write(state.Variables["value"].Value); // 5&lt;/pre&gt;
-
-
-&lt;h2&gt;Setting Globals&lt;/h2&gt;
-
-&lt;p&gt;We've seen a number of ways of getting data out of the script, but what about getting data into the script? This is one of my favorite features of the scripting API because it's so easy to use. To set the data available to the script, you just have to pass an arbitrary object to one of the three 
-&lt;code&gt;CSharpScript&lt;/code&gt; static methods. The members of this object will then be available to your script as globals. For example:&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;// Defined elsewhere
-public class Globals
-{
-	public int X;
-	public int Y;
-}
-
-var value = CSharpScript.Eval("X + Y", new Globals { X = 1, Y = 2 });
-Console.Write(value); // 3&lt;/pre&gt;
-
-&lt;p&gt;Note that the scripting engine respects protection levels so it's not possible to directly pass an anonymous object to the script because anonymous objects are usually scoped to the method in which they appear.&lt;/p&gt;
-
-
-&lt;h2&gt;Creating a Delegate&lt;/h2&gt;
-
-&lt;p&gt;Finally you may want to compile the script, but store it for later reuse. Thankfully, there is also an easy way to create a delegate from any method in your script by calling 
-&lt;code&gt;ScriptState.CreateDelegate()&lt;/code&gt;.&lt;/p&gt;
-
-&lt;pre class="prettyprint"&gt;ScriptState state = CSharpScript.Run("int Times(int x) { return x * x; }");
-var fn = state.CreateDelegate&amp;lt;Func&amp;lt;int, int&amp;gt;&amp;gt;("Times");
-var value = fn(5);
-Console.Write(value);  // 25&lt;/pre&gt;
-
-
-&lt;h2&gt;Conclusions&lt;/h2&gt;
-
-&lt;p&gt;By now you've hopefully thought of some use cases for the new scripting capability. My personal favorite at the moment is using this to drive configuration files. Instead of configuring your application using XML or JSON, why not set up a scripting environment and let your users (or you) write code to configure the application. If this interests you, I should also mention &lt;a href="https://github.com/config-r/config-r"&gt;ConfigR&lt;/a&gt; which does exactly this while abstracting away many of the details. Any post on C# scripting would also be incomplete without a mention of &lt;a href="https://github.com/scriptcs/scriptcs"&gt;scriptcs&lt;/a&gt; which provides a REPL for you to use on the command line for executing your own script files.&lt;/p&gt;
-
-&lt;p&gt;There's also a lot more to the .NET Compiler Platform scripting support than what I've discussed here. It's even possible to compile your script to a syntax tree and then use the rest of the .NET Compiler Platform capabilities to explore, analyze, and manipulate the script. A good place to continue exploring is the &lt;a href="http://source.roslyn.io/"&gt;enhanced Roslyn source view site&lt;/a&gt;.&lt;/p&gt;</description><pubDate>Wed, 18 Feb 2015 00:00:00 Z</pubDate><a10:updated>2015-02-18T00:00:00Z</a10:updated></item></channel></rss>
+&lt;p&gt;More information including installation and usage instructions is available at &lt;a href="https://github.com/daveaglick/LINQPad.CodeAnalysis"&gt;https://github.com/daveaglick/LINQPad.CodeAnalysis&lt;/a&gt;&lt;/p&gt;</description><pubDate>Wed, 18 Mar 2015 00:00:00 Z</pubDate><a10:updated>2015-03-18T00:00:00Z</a10:updated></item></channel></rss>
