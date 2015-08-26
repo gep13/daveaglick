@@ -1,312 +1,69 @@
-/* Pure CSS sticky footer concept from http://css-tricks.com/snippets/css/sticky-footer/ */
-
-html,
-body {
-  height: 100%;
-}
-#page-wrapper {
-  min-height: 100%;
-  margin-bottom: -130px;
-  /* equal to footer height */
-
-}
-#page-wrapper:after {
-  content: "";
-  display: block;
-}
-#sticky-footer-wrapper,
-#page-wrapper:after {
-  height: 130px;
-  /* must be the same height as footer */
-
-}
-#sticky-footer-wrapper {
-  width: 100%;
-  padding-top: 12px;
-}
-#sticky-footer-wrapper #sticky-footer {
-  background-color: #333333;
-  color: #777777;
-  padding-top: 12px;
-  height: 118px;
-  /* equal to footer height minus padding */
-
-}
-body {
-  border-top: 12px solid #333333;
+#intro-header {
   background-color: #555555;
 }
-#body-content {
-  margin-top: 18px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  border-top-right-radius: 6px;
-  border-top-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  border-bottom-left-radius: 6px;
-  background-color: white;
+.intro-header .site-heading .subheading {
+  line-height: 1.6;
 }
-.logo-col {
-  padding-bottom: 6px;
-  background-color: #333333;
-  font-weight: 900;
-  color: #eeeeee;
-  font-size: 26px;
-  border-bottom-right-radius: 6px;
-  border-bottom-left-radius: 6px;
+.btn {
+  margin-bottom: 6px;
 }
-.logo-col a,
-.logo-col a:hover,
-.logo-col a:focus,
-.logo-col a:active {
-  color: #eeeeee;
+.btn-sm {
+  font-size: 12px;
+  padding: 5px 10px;
 }
-h1 a,
-h2 a,
-h3 a,
-h4 a,
-h5 a,
-h6 a,
-h1 a:hover,
-h2 a:hover,
-h3 a:hover,
-h4 a:hover,
-h5 a:hover,
-h6 a:hover,
-h1 a:focus,
-h2 a:focus,
-h3 a:focus,
-h4 a:focus,
-h5 a:focus,
-h6 a:focus,
-h1 a:active,
-h2 a:active,
-h3 a:active,
-h4 a:active,
-h5 a:active,
-h6 a:active {
-  color: inherit;
-}
-.btn-default .badge {
-  background-color: #cccccc;
-  color: #555555;
-}
-.nav-col,
-.proj-col {
-  padding-top: 6px;
-  display: block;
-  color: #333333;
-}
-.nav-col a,
-.proj-col a,
-.nav-col a:hover,
-.proj-col a:hover,
-.nav-col a:focus,
-.proj-col a:focus,
-.nav-col a:active,
-.proj-col a:active {
-  color: #eeeeee;
-}
-.nav-col strong,
-.proj-col strong {
-  font-weight: 900;
-}
-.nav-col .navbar-toggle,
-.proj-col .navbar-toggle {
-  margin-right: 0;
-}
-.icon-bar {
-  background-color: #eeeeee;
-}
-.topnav {
-  color: #555555;
-  font-weight: bold;
-}
-.banner .hello {
-  font-family: "Lato", sans-serif;
-  font-size: 82px;
-  line-height: 1;
-}
-.banner .intro {
-  font-family: "Droid Serif", serif;
-  font-size: 26px;
-}
-.banner .title {
-  font-weight: 900;
-  font-size: 53px;
-  word-wrap: break-word;
-}
-.banner .lead {
-  font-size: 41px;
-  margin-bottom: 0;
-}
-.banner .stats {
-  padding-bottom: 10px;
-}
-.banner .stats .stat-heading {
-  text-align: right;
-}
-.lead {
-  font-family: "Lato", sans-serif;
-}
-p,
-.p,
-#body-content ul {
-  font-family: "Droid Serif", serif;
-  line-height: 24px;
-}
-p a:link,
-.p a:link,
-#body-content ul a:link,
-p a:visited,
-.p a:visited,
-#body-content ul a:visited,
-p a:active,
-.p a:active,
-#body-content ul a:active {
-  color: #28a1c5;
-}
-p a:hover,
-.p a:hover,
-#body-content ul a:hover {
-  color: #1b6d85;
-}
-strong {
-  font-weight: 900;
+.btn-xs {
+  font-size: 12px;
+  padding: 1px 5px;
 }
 .right-border {
   border-right: 1px solid #eeeeee;
 }
-.tag-button {
+.sidebar li {
+  margin-bottom: 8px;
+}
+.post-list > a {
+  color: #333333;
+}
+.post-list > a:hover,
+.post-list > a:focus {
+  text-decoration: none;
+  color: #337ab7;
+}
+.post-list > a > .post-title {
+  margin-top: 10px;
   margin-bottom: 6px;
 }
-.tag-button::before {
+.post-list > a > .post-subtitle {
+  margin: 0;
+  font-weight: 300;
+  margin-bottom: 6px;
+}
+.post-list > .post-meta {
   color: #777777;
+  font-size: 16px;
+  font-style: italic;
+  margin-top: 0;
 }
-.label-date::before {
-  margin-right: 6px;
-  color: #777777;
-}
-.label-comments {
-  color: #777777;
-}
-.label-comments a {
-  color: #777777 !important;
-}
-.label-comments a:hover,
-.label-comments a:focus {
-  color: #777777 !important;
-}
-.label-comments::before {
-  margin-right: 6px;
-  color: #777777;
-}
-td {
-  word-wrap: break-word;
-  word-break: break-all;
-}
-.graph {
+.post-list > .post-meta > a {
+  text-decoration: none;
   color: #333333;
-  background-color: whitesmoke;
-  border: 1px solid #cccccc;
-  border-radius: 4px;
 }
-@media (max-width: 767px) {
-  #page-wrapper {
-    margin-bottom: -240px;
-  }
-  #body-content {
-    margin-top: 60px;
-    border-top-right-radius: 0;
-    border-top-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-  }
-  #sticky-footer-wrapper,
-  #page-wrapper:after {
-    height: 240px;
-    /* must be the same height as footer */
-  
-  }
-  #sticky-footer-wrapper {
-    padding-top: 0;
-  }
-  #sticky-footer-wrapper #sticky-footer {
-    height: 240px;
-    /* equal to footer height minus padding */
-  
-  }
-  body {
-    border-top: none;
-  }
-  .nav-row {
-    background-color: #333333;
-  }
-  .logo-col {
-    padding-top: 6px;
-    padding-bottom: 0;
-    border-bottom-right-radius: none;
-    border-bottom-left-radius: none;
-  }
-  .nav-col,
-  .proj-col {
-    padding-top: 0;
-    color: #777777;
-  }
-  .nav-col a,
-  .proj-col a,
-  .nav-col a:hover,
-  .proj-col a:hover,
-  .nav-col a:focus,
-  .proj-col a:focus,
-  .nav-col a:active,
-  .proj-col a:active {
-    color: #eeeeee;
-  }
-  .nav-col.collapse,
-  .proj-col.collapse {
-    display: none;
-  }
-  .nav-col.collapse.in,
-  .proj-col.collapse.in {
-    display: block;
-  }
-  .hero-row {
-    padding-top: 6px;
-  }
-  .hero-row .stats .stat-heading {
-    text-align: left;
-  }
-  .right-border {
-    border-right: none;
-  }
-  .banner .title {
-    font-size: 32px;
-  }
-  .banner .hello {
-    font-size: 32px;
-  }
-  .banner .intro {
-    font-size: 19px;
-  }
-  .banner .lead {
-    font-size: 32px;
-  }
-  h1 {
-    font-size: 32px;
-  }
-  h2 {
-    font-size: 26px;
-  }
-  h3 {
-    font-size: 19px;
-  }
-  h4 {
-    font-size: 15px;
-  }
-  h5 {
-    font-size: 13px;
-  }
+.post-list > .post-meta > a:hover,
+.post-list > .post-meta > a:focus {
+  color: #337ab7;
+  text-decoration: underline;
+}
+.post-heading .subheading {
+  margin-bottom: 0;
+}
+.post-heading .meta {
+  margin-top: 30px;
+}
+.post-heading .tags {
+  margin-top: 30px;
+}
+.post-heading .tags .btn {
+  border-color: #222222;
 }
 /* Code styles */
 
@@ -323,7 +80,7 @@ pre.prettyprint {
 }
 code {
   background-color: #eeeeee;
-  color: black;
+  color: #555555;
 }
 .panel .table pre {
   margin: 0px;
