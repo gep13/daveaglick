@@ -7,7 +7,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
-	<title>Dave Glick - Streaming LINQ-Based Text Search and Replace</title>
+	<title>Dave Glick - Announcing @dotnetissues</title>
         <meta name="description" content="The personal blog of Dave Glick" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
 
@@ -32,10 +32,10 @@
         <meta name="msapplication-tooltip" content="Dave Glick" />
         <meta name="msapplication-starturl" content="/" />
 
-        <meta property="og:title" content="Dave Glick - Streaming LINQ-Based Text Search and Replace" />
+        <meta property="og:title" content="Dave Glick - Announcing @dotnetissues" />
         
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="http://daveaglick.com/posts/streaming-linq-based-text-search-and-replace" />
+        <meta property="og:url" content="http://daveaglick.com/posts/announcing-dotnetissues" />
         <!-- TODO: More social graph meta tags -->
 
         <script src="/Scripts/jquery-2.1.1.min.js"></script>
@@ -94,13 +94,15 @@
                                         <div class="col-md-12">
 
     <div class="post-heading">
-        <h1>Streaming LINQ-Based Text Search and Replace</h1>
+        <h1>Announcing @dotnetissues</h1>
+            <h2 class="subheading">A Twitter bot to keep you up to date with important .NET repositories.</h2>
         <div class="meta">        
-                Published on Tuesday, August 4, 2015<br>
+                Published on Monday, September 21, 2015<br>
                     </div>
             <div class="tags">
 
-<a role="button" href="/tags/linq" class="btn btn-default btn-sm"> LINQ</a>            </div>     
+<a role="button" href="/tags/open-source" class="btn btn-default btn-sm"> open source</a>
+<a role="button" href="/tags/twitter" class="btn btn-default btn-sm"> Twitter</a>            </div>     
     </div>
                                         </div>
                                 </div>
@@ -115,77 +117,33 @@
 
 
 
-<p>I was recently thinking about streaming operations and got to wondering about string operations on streaming data. Specifically, how would you perform a text search and replace on a string if you could only stream the string one character at a time? This could have real-world application in asynchronous systems where you get a string a character at a time, or in memory-intensive scenarios where you can't load the source string into memory at once. For the most part though, this was just a thought exercise. I structured the code as a LINQ-like extension method, though obviously the same approach could be used with streams.</p>
-<p>Here's what I came up with:</p>
-<pre class="prettyprint"><code>public static IEnumerable&lt;char&gt; Replace(this IEnumerable&lt;char&gt; source, string search, string replace)
-{
-    // Iterate the source characters
-    int match = 0;
-    foreach(char c in source)
-    {
-        if(match == search.Length)
-        {
-            // Found a match, replace it with replace
-            foreach(char r in replace)
-            {
-                yield return r;
-            }
-            match = 0;
-        }
-        
-        if(c == search[match])
-        {
-            // Potentially a match
-            match++;
-        }
-        else
-        {
-            // Not a match, output candidate match up to this point
-            if(match &gt; 0)
-            {
-                for(int m = 0 ; m &lt; match ; m++)
-                {
-                    yield return search[m];
-                }
-                match = 0;
-            }
-            
-            // And output non-matched char
-            yield return c;
-        }
-    }
-    
-    // Output any matches or partial matches at the end
-    if(match == search.Length)
-    {
-        foreach(char r in replace)
-        {
-            yield return r;
-        }
-    }
-    else if(match &gt; 0)
-    {
-        for(int m = 0 ; m &lt; match ; m++)
-        {
-            yield return search[m];
-        }           
-    }
-}
-</code></pre>
-<p>Usage:</p>
-<pre class="prettyprint"><code>string source = @&quot;Lorem ipsum dolor sit amet, consectetur adipiscing
-    elit, sed do eiusmod tempor incididunt ut labore et dolore magna 
-    aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
-    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure 
-    dolor in reprehenderit in voluptate velit esse cillum dolore eu 
-    fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, 
-    sunt in culpa qui officia deserunt mollit anim id est laborum.&quot;;
-string search = @&quot;dolor&quot;;
-string replace = @&quot;foobar&quot;;
-string replaced = new string(source.ToCharArray().Replace(search, replace).ToArray());
-</code></pre>
-<p>Performance isn't terrible, but it's not too great either. In very rough benchmarking it's about an order of magnitude (and a little more) slower than a standard <code>string.Replace(...)</code>. Of course, there are much faster string search algorithms that take advantage of being able to seek. You could also speed this up by buffering and then doing a <code>string.Replace(...)</code> on each chunk (though you'd have to account for matches at the break points of the chunks). You could also easly genericize the algorithm to search and replace any sort of object in an <code>IEnumerable&lt;T&gt;</code>, not just <code>char</code>.</p>
-<p>Please let me know in the comments if you have any other optimization ideas.</p>
+<p>As more and more of the .NET framework, runtime, etc. get put in the open on GitHub, the community has the opportunity to participate in the day-to-day evolution of core parts of our platform. However, given the large number of projects (which is great!) and the volume of interaction, it can be hard to keep up. This is especially true because of the all-or-nothing notification model in GitHub. If you watch a repository, you will get notified of every since action including comments, commits, etc. What I wanted was a way to get notified of <em>new</em> issues so that I could keep an eye on things and then elect to subscribe to additional notifications for just the ones that interested me.</p>
+<p>To achieve this, I created <a href="https://twitter.com/dotnetissues">a Twitter bot</a> that scans core .NET respositories and tweets all new issues:</p>
+<blockquote class="twitter-tweet" lang="en"><p lang="en" dir="ltr">aspnet\Configuration#292 <a href="https://t.co/KfVNvpgrUr">https://t.co/KfVNvpgrUr</a>&#10;Add `Exists` to IConfigurationSection</p>&mdash; DotNet Issues (@dotnetissues) <a href="https://twitter.com/dotnetissues/status/645925456026406912">September 21, 2015</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>It currently looks at the following repositores (let me know in the comments if I should add any additional ones):</p>
+<ul>
+<li><a href="https://github.com/dotnet/roslyn">dotnet/roslyn</a></li>
+<li><a href="https://github.com/dotnet/coreclr">dotnet/coreclr</a></li>
+<li><a href="https://github.com/dotnet/corefx">dotnet/corefx</a></li>
+<li><a href="https://github.com/aspnet/dnx">aspnet/dnx</a></li>
+<li><a href="https://github.com/aspnet/Routing">aspnet/Routing</a></li>
+<li><a href="https://github.com/aspnet/Hosting">aspnet/Hosting</a></li>
+<li><a href="https://github.com/aspnet/Identity">aspnet/Identity</a></li>
+<li><a href="https://github.com/aspnet/Razor">aspnet/Razor</a></li>
+<li><a href="https://github.com/aspnet/Security">aspnet/Security</a></li>
+<li><a href="https://github.com/aspnet/Mvc">aspnet/Mvc</a></li>
+<li><a href="https://github.com/aspnet/EntityFramework">aspnet/EntityFramework</a></li>
+<li><a href="https://github.com/aspnet/DependencyInjection">aspnet/DependencyInjection</a></li>
+<li><a href="https://github.com/aspnet/Logging">aspnet/Logging</a></li>
+<li><a href="https://github.com/aspnet/Configuration">aspnet/Configuration</a></li>
+<li><a href="https://github.com/aspnet/Announcements">aspnet/Announcements</a></li>
+<li><a href="https://github.com/NuGet/Home">NuGet/Home</a></li>
+</ul>
+<p>This lets you monitor issue creation in your Twitter timeline (which is great for me since I usually have it open during the day anyway). It also has the side benefit of making it easy to tweet about new issues by quoting from the bot.</p>
+<p>To achieve an even greater level of automation, I currently have an <a href="https://ifttt.com/">IFTTT</a> recipe configured that emails me whenever the bot tweets. This workflow is working great for me. I get email notifications for new issues, I can open them if they look interesting, and then subscribe if I want to keep up to date with them. This provides exactly the level of notification I was looking for.</p>
+<p>Under the hood, the bot is running as an <a href="https://azure.microsoft.com/en-us/documentation/articles/web-sites-create-web-jobs/">Azure WebJob</a> via the <a href="http://azure.microsoft.com/en-us/services/scheduler/">Azure Scheduler service</a> at 5 minute intervals. It uses <a href="https://github.com/JoeMayo/LinqToTwitter">LinqToTwitter</a> for Twitter REST API access and <a href="https://github.com/octokit/octokit.net">Octokit</a> for GitHub API access. Thanks also to <a href="https://www.dougv.com/related/linq2twitter/">this blog series on LinqToTwitter</a> by Doug Vanderweide, it was very helpful in getting up and running with the Twitter API quickly.</p>
+<p>Code for the bot is general, so you could use it to do something similar for any repository. <a href="https://github.com/daveaglick/IssueTweeter">IssueTweeter is hosted at GitHub</a> (naturally). Just let me know if anyone is interested in using it for another bot, and I'd be happy to help set it up.</p>
 
 
 
@@ -193,9 +151,9 @@ string replaced = new string(source.ToCharArray().Replace(search, replace).ToArr
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
     var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
-    var disqus_identifier = 'streaming-linq-based-text-search-and-replace';
-    var disqus_title = 'Streaming LINQ-Based Text Search and Replace';
-    var disqus_url = 'http://www.daveaglick.com/posts/streaming-linq-based-text-search-and-replace';
+    var disqus_identifier = 'announcing-dotnetissues';
+    var disqus_title = 'Announcing @dotnetissues';
+    var disqus_url = 'http://www.daveaglick.com/posts/announcing-dotnetissues';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {

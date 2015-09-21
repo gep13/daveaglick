@@ -112,6 +112,15 @@
 
 <div class="row">
  <div class="col-sm-8 right-border">            <div class="post-preview">
+                <a href="/posts/announcing-dotnetissues">
+                    <h2 class="post-title">Announcing @dotnetissues</h2>
+                        <h3 class="post-subtitle">A Twitter bot to keep you up to date with important .NET repositories.</h3>
+                </a>
+                <p class="post-meta">Posted on Monday, September 21, 2015</p>
+                <p>As more and more of the .NET framework, runtime, etc. get put in the open on GitHub, the community has the opportunity to participate in the day-to-day evolution of core parts of our platform. However, given the large number of projects (which is great!) and the volume of interaction, it can be hard to keep up. This is especially true because of the all-or-nothing notification model in GitHub. If you watch a repository, you will get notified of every since action including comments, commits, etc. What I wanted was a way to get notified of <em>new</em> issues so that I could keep an eye on things and then elect to subscribe to additional notifications for just the ones that interested me.</p>             
+            </div>       
+                <hr /> 
+            <div class="post-preview">
                 <a href="/posts/multiple-string-replacement">
                     <h2 class="post-title">Multiple String Replacement</h2>
                         <h3 class="post-subtitle">Strings are hard.</h3>
@@ -127,14 +136,6 @@
                 <p class="post-meta">Posted on Sunday, August 23, 2015</p>
                 <p>Just a quick note that most of the functionality in <a href="https://github.com/daveaglick/LINQPad.CodeAnalysis">LINQPad.CodeAnalysis</a> can now be found in <a href="https://www.linqpad.net/Download.aspx#beta5">LINQPad 5 (as of 5.02 beta)</a>. When using LINQPad 5, the syntax tree and syntax visualizer are both found under the "Tree" tab after executing a query. This tab is available for any query and you can also dump a <code>SyntaxTree</code> or <code>SyntaxNode</code> explicitly by calling <code>.DumpSyntaxTree()</code> or <code>.DumpSyntaxNode()</code>. The integration in LINQPad 5 is also tighter than a plugin allows and lets you highlight the original query as you highlight nodes in the syntax tree as well as other UI improvements. I'd like to thank Joseph Albahari for making this integration possible and for tweaking things to provide the best possible experience:</p>             
             </div>       
-                <hr /> 
-            <div class="post-preview">
-                <a href="/posts/streaming-linq-based-text-search-and-replace">
-                    <h2 class="post-title">Streaming LINQ-Based Text Search and Replace</h2>
-                </a>
-                <p class="post-meta">Posted on Tuesday, August 4, 2015</p>
-                <p>I was recently thinking about streaming operations and got to wondering about string operations on streaming data. Specifically, how would you perform a text search and replace on a string if you could only stream the string one character at a time? This could have real-world application in asynchronous systems where you get a string a character at a time, or in memory-intensive scenarios where you can't load the source string into memory at once. For the most part though, this was just a thought exercise. I structured the code as a LINQ-like extension method, though obviously the same approach could be used with streams.</p>             
-            </div>       
 </div>
  <div class="col-sm-4 sidebar">        <hr class="visible-xs-block" />
         <h5>Tags</h5>
@@ -145,7 +146,7 @@
 
   <a role="button" href="/tags/asp.net-mvc" class="btn btn-default btn-sm"> ASP.NET MVC <span class='badge'>10</span></a><br>
 
-  <a role="button" href="/tags/open-source" class="btn btn-default btn-sm"> open source <span class='badge'>6</span></a><br>
+  <a role="button" href="/tags/open-source" class="btn btn-default btn-sm"> open source <span class='badge'>7</span></a><br>
 
   <a role="button" href="/tags/programming" class="btn btn-default btn-sm"> programming <span class='badge'>6</span></a><br>
 
@@ -159,7 +160,7 @@
 
   <a role="button" href="/tags/grid" class="btn btn-default btn-sm"> grid <span class='badge'>4</span></a><br>
 
-  <a role="button" href="/tags/static-site-generator" class="btn btn-default btn-sm"> static site generator <span class='badge'>3</span></a><br>
+  <a role="button" href="/tags/linq" class="btn btn-default btn-sm"> LINQ <span class='badge'>3</span></a><br>
         </div>
         <ul class="pager">
             <li class="next">
@@ -193,10 +194,10 @@
         <h5>Older Posts</h5>
 
   <ul class="list-unstyled">
+   <li><a href="/posts/streaming-linq-based-text-search-and-replace">Streaming LINQ-Based Text Search and Replace</a></li>
    <li><a href="/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler">Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</a></li>
    <li><a href="/posts/serving-extensionless-urls-with-owin">Serving Extensionless URLs with OWIN</a></li>
    <li><a href="/posts/converting-my-blog-to-wyam">Converting My Blog to Wyam</a></li>
-   <li><a href="/posts/announcing-wyam">Announcing Wyam</a></li>
   </ul>        <ul class="pager">
             <li class="next">
                 <a href="/posts">Archive &rarr;</a>
