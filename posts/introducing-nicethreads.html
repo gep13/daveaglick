@@ -1,0 +1,263 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Introducing NiceThreads</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/clean-blog.css" rel="stylesheet" />
+        <link href="/Content/master.css" rel="stylesheet" />
+        <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Introducing NiceThreads" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/introducing-nicethreads" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="/Scripts/clean-blog.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        </script>
+            
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+                <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+                <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    
+	</head>
+	<body onload="prettyPrint()">
+                
+                <!-- Navigation -->
+                <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+                        <div class="container-fluid">
+                                <!-- Brand and toggle get grouped for better mobile display -->
+                                <div class="navbar-header page-scroll">
+                                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                                        <span class="sr-only">Toggle navigation</span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        </button>
+                                        <a class="navbar-brand" href="/">Dave Glick</a>
+                                </div>
+                        
+                                <!-- Collect the nav links, forms, and other content for toggling -->
+                                <div class="collapse navbar-collapse" id="navbar-collapse">
+                                        <ul class="nav navbar-nav navbar-right">
+                                                <li><a href="http://wyam.io/">Wyam</a></li>
+                                                <li><a href="http://fluentbootstrap.com/">FluentBootstrap</a></li>
+                                                <li><a class="hidden-xs">|</a><a class="visible-xs-block">-</a></li>
+                                                <li><a href="/about">About</a></li>
+                                                <li><a href="/posts">Archive</a></li>
+                                                <li><a href="/tags">Tags</a></li>
+                                        </ul>
+                                </div>
+                                <!-- /.navbar-collapse -->
+                        </div>
+                        <!-- /.container -->
+                </nav>
+                
+                <!-- Page Header -->
+                <header class="intro-header" id="intro-header">
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+
+    <div class="post-heading">
+        <h1>Introducing NiceThreads</h1>
+            <h2 class="subheading">A threading utility library designed to make different threading primitives easier to use.</h2>
+        <div class="meta">        
+                Published on Friday, February 17, 2012<br>
+                    </div>
+            <div class="tags">
+
+<a role="button" href="/tags/ilocker" class="btn btn-default btn-sm"> ILocker</a>
+<a role="button" href="/tags/locking" class="btn btn-default btn-sm"> locking</a>
+<a role="button" href="/tags/monitor" class="btn btn-default btn-sm"> Monitor</a>
+<a role="button" href="/tags/nicethreads" class="btn btn-default btn-sm"> NiceThreads</a>
+<a role="button" href="/tags/readerwriterlockslim" class="btn btn-default btn-sm"> ReaderWriterLockSlim</a>
+<a role="button" href="/tags/threading" class="btn btn-default btn-sm"> Threading</a>            </div>     
+    </div>
+                                        </div>
+                                </div>
+                        </div>
+                </header>
+                
+                <!-- Main Content -->
+                <div class="container">
+                        <div class="row">
+                                <div class="col-md-12">
+                                        
+
+
+
+
+<p>NiceThreads is threading utility library designed to make different threading primitives easier to use with a more consistent API. It started out of frustration with the different options (and more specifically, the different APIs) for enabling thread safety and locks in the .NET framework and how much code was required to use some of them. NiceThreads provides a consistent interface for standard <code><a href="http://msdn.microsoft.com/en-us/library/system.threading.monitor.aspx">Monitor</a></code> locks and the <code><a href="http://msdn.microsoft.com/en-us/library/system.threading.readerwriterlockslim.aspx">ReaderWriterLockSlim</a></code> class (and possibly others in the future). It also provides support for activating and deactivating these locking primitives through the <a href="http://msdn.microsoft.com/en-us/library/system.idisposable.aspx">disposable pattern</a>. Finally, it provides wrappers that can easily provide thread-safety to unsafe objects.</p>
+<h1>Common API</h1>
+<p>Both <code>Monitor</code> (and the "lock" statement which is syntactic sugar for <code>Monitor</code>) and <code>ReaderWriterLockSlim</code> attempt to solve the same problem: preventing conflicting concurrent access to objects that might need to be read or written to by multiple threads. They both do this by limiting access to the object to one thread at a time (or in the case of read locks provided by <code>ReaderWriterLockSlim</code>, only to threads that signal they want read-only access) while making other threads wait their turn. However, even though both classes provide similar functionality they are intended for different uses and have <a href="http://blogs.msdn.com/b/pedram/archive/2007/10/07/a-performance-comparison-of-readerwriterlockslim-with-readerwriterlock.aspx">different tradeoffs</a>. Further, they use similar but different APIs making switching between them difficult.</p>
+<p>To solve this problem, NiceThreads provides a consistent ILocker interface that has implementations wrapping both classes and provides a consistent API. The rest of NiceThreads is designed to interact with <code>ILocker</code> allowing interchangeable use of the different types of locking primitives. In addition, the <code>ILocker</code> interface can be used directly to provide a consistent wrapper around either locking class for your own code.</p>
+<p>For example:</p>
+<pre class="prettyprint">ILocker locker = new ReaderWriterLockSlimLocker();
+locker.EnterReadLock();
+// Do work...
+locker.ExitReadLock();
+locker = new MonitorLocker();
+locker.EnterReadLock();
+// Do work...
+locker.ExitReadLock();</pre>
+<h1>Disposable Pattern</h1>
+<p>Both locking primitives require explicitly activating the lock and subsequently manually removing the lock when finished. This can lead to problems if the developer forgets to release the lock or ends up exiting the normal program flow (for example, because an exception was thrown). The <code>lock</code> keyword in C# attempts to make this design easier to use for the <code>Monitor</code> class by abstracting <code>Monitor</code> instantiation and surrounding it's use in a control block, however, no such keyword exists for other locking classes such as <code>ReaderWriterLockSlim</code>. In addition, using the <code>lock</code> keyword means some control is lost over the lifecycle and usage of the underlying <code>Monitor</code> class.</p>
+<p>NiceThreads attempts to solve this problem by providing a set of classes that implement <code>IDisposable</code> and wraps an underlying <code>ILocker</code> (which in turn provides consistent access to alternate framework locking classes). They activate the requested lock type on instantiation and free it on disposal. This allows the developer to use the built-in support for the disposable pattern in .NET to automatically free a lock when finished with it by using the <code>using</code> statement.</p>
+<p>For example:</p>
+<pre class="prettyprint">ILocker locker = new ReaderWriterLockSlimLocker();
+using(new ReadLock(locker))
+{
+  // Do work...
+}</pre>
+<h1>Thread-Safe Wrappers</h1>
+<p>Even with the added convenience of a consistent API and disposable pattern support, implementing thread-safety for non-thread-safe objects can still require a fair amount of code. For every object that needs to be protected, a new locking object potentially needs to be created and maintained. NiceThreads helps implement thread safety for objects by providing wrapper classes that encapsulate generic locking logic and provide thread-safe access to their underlying object. <code>SyncObject&lt;T&gt;</code> wraps an arbitrary type and <code>ReadOnlySyncObject&lt;T&gt;</code> wraps an arbitrary type while providing "readonly" semantics (I.e., once the <code>ReadOnlySyncObject&lt;T&gt;</code> has been constructed, it's underlying object cannot be changed). These classes provide a variety of methods to expose their wrapped object in thread-safe ways including thread-safe getting and setting, disposable pattern access, and action/function providers (I.e., lambdas or anonymous methods).</p>
+<p>For example:</p>
+<pre class="prettyprint">SyncObject&lt;int&gt; num = new SyncObject&lt;int&gt;(10);
+num.Sync = 20; // Access as a property with a thread-safe setter
+int value = num.Sync; // Access as a property with a thread-safe getter
+using(num.WriteLock())
+{
+ // We can now access using unsafe code
+ num.UnsyncField++; // Provides direct field access
+ value = num.Unsync; // Access as a property with an unsafe getter
+}
+num.DoWrite(n => n + 10); // Thread-safe write with an Action
+value = num.DoRead(n => n + 100); // Thread-safe read with a Func
+</pre>
+<h1>Obtaining</h1>
+<p>NiceThreads is open source and released under the Apache 2.0 license. It can be obtained here: <a href="https://github.com/daveaglick/NiceThreads">https://github.com/daveaglick/NiceThreads</a></p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+    var disqus_identifier = 'introducing-nicethreads';
+    var disqus_title = 'Introducing NiceThreads';
+    var disqus_url = 'http://www.daveaglick.com/posts/introducing-nicethreads';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+
+                                </div>
+                        </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Footer -->
+                <footer>
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+                                        <ul class="list-inline text-center">
+                                                <li>
+                                                <a href="https://twitter.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                                <li>
+                                                <a href="https://github.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                        </ul>
+                                        <p class="copyright text-muted">
+                                                Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
+                                                <br />
+                                                <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
+                                                <br />
+                                                <a href="https://github.com/daveaglick/daveaglick"><i class="fa fa-github"></i> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                                        </p>
+                                        </div>
+                                </div>
+                        </div>
+                </footer> 
+        
+                <script type="text/javascript">
+                        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                        var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+                
+                        /* * * DON'T EDIT BELOW THIS LINE * * */
+                        (function () {
+                                var s = document.createElement('script'); s.async = true;
+                                s.type = 'text/javascript';
+                                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                        }());
+                
+                        // Google Analytics
+                        (function (i, s, o, g, r, a, m) {
+                                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                                (i[r].q = i[r].q || []).push(arguments)
+                                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                
+                        ga('create', 'UA-54470483-1', 'auto');
+                        ga('send', 'pageview');
+                
+                        // Background                        
+                        var colors = Please.make_color({
+                                colors_returned: 3,
+                                saturation: .6
+                        });
+                        var t = new Trianglify({
+                                x_gradient: colors,
+                                y_gradient: ["#FFFFFF"]
+                        });
+                        var header = document.getElementById("intro-header");
+                        var pattern = t.generate(header.clientWidth, header.clientHeight);
+                        header.setAttribute('style', 'background-image: ' + pattern.dataUrl);                        
+                </script>
+        </body>
+</html>
+

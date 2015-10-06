@@ -1,0 +1,320 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - WrappingStringBuilder</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/clean-blog.css" rel="stylesheet" />
+        <link href="/Content/master.css" rel="stylesheet" />
+        <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - WrappingStringBuilder" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/wrappingstringbuilder" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="/Scripts/clean-blog.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        </script>
+            
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+                <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+                <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    
+	</head>
+	<body onload="prettyPrint()">
+                
+                <!-- Navigation -->
+                <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+                        <div class="container-fluid">
+                                <!-- Brand and toggle get grouped for better mobile display -->
+                                <div class="navbar-header page-scroll">
+                                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                                        <span class="sr-only">Toggle navigation</span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        </button>
+                                        <a class="navbar-brand" href="/">Dave Glick</a>
+                                </div>
+                        
+                                <!-- Collect the nav links, forms, and other content for toggling -->
+                                <div class="collapse navbar-collapse" id="navbar-collapse">
+                                        <ul class="nav navbar-nav navbar-right">
+                                                <li><a href="http://wyam.io/">Wyam</a></li>
+                                                <li><a href="http://fluentbootstrap.com/">FluentBootstrap</a></li>
+                                                <li><a class="hidden-xs">|</a><a class="visible-xs-block">-</a></li>
+                                                <li><a href="/about">About</a></li>
+                                                <li><a href="/posts">Archive</a></li>
+                                                <li><a href="/tags">Tags</a></li>
+                                        </ul>
+                                </div>
+                                <!-- /.navbar-collapse -->
+                        </div>
+                        <!-- /.container -->
+                </nav>
+                
+                <!-- Page Header -->
+                <header class="intro-header" id="intro-header">
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+
+    <div class="post-heading">
+        <h1>WrappingStringBuilder</h1>
+            <h2 class="subheading">A small utility class for wrapping strings at predefined points based on line length.</h2>
+        <div class="meta">        
+                Published on Tuesday, October 6, 2015<br>
+                    </div>
+            <div class="tags">
+
+<a role="button" href="/tags/algorithms" class="btn btn-default btn-sm"> algorithms</a>
+<a role="button" href="/tags/strings" class="btn btn-default btn-sm"> strings</a>            </div>     
+    </div>
+                                        </div>
+                                </div>
+                        </div>
+                </header>
+                
+                <!-- Main Content -->
+                <div class="container">
+                        <div class="row">
+                                <div class="col-md-12">
+                                        
+
+
+
+<p>I've been working on a Roslyn-powered documentation generator built on top of <a href="http://wyam.io">Wyam</a> for a little while, but recently ran into an area that's taken a lot longer than I thought it would. I've been trying to generate syntax strings that look like the ones on the MSDN site:</p>
+<p><img src="/Content/posts/syntax.png" alt="Syntax" class="img-responsive" style="margin-top: 6px; margin-bottom: 6px;"></p>
+<p>It turns out this is really hard. Roslyn doesn't quite do this in the box (thought it gets close) and getting the formatting correct with wrapping and indents is a challenge.</p>
+<p>To addess that last problem, I created a little helper class that can append string segments with an optional indication of whether they should be allowed to wrap to the next line. You can also specify (and change) a string prefix to use for new lines (for indenting text, for example). I haven't seen anything else like this out there, and it took me a while to work through all the edge cases (it's covered by unit tests in my actual project), so I figured I'd share in case it helps anyone.</p>
+<pre class="prettyprint"><code>internal class WrappingStringBuilder
+{
+    private readonly StringBuilder _masterBuilder 
+        = new StringBuilder();
+    private readonly List&lt;Tuple&lt;string, bool, bool&gt;&gt; _segments 
+        = new List&lt;Tuple&lt;string, bool, bool&gt;&gt;();
+    private readonly int _maxLineLength;
+    public string NewLinePrefix { get; set; }
+
+    public WrappingStringBuilder(int maxLineLength, string newLinePrefix = null)
+    {
+        if (maxLineLength &lt; 1)
+        {
+            throw new ArgumentException(nameof(maxLineLength) 
+                + &quot; must be greater than 0.&quot;, nameof(maxLineLength));
+        }
+        _maxLineLength = maxLineLength;
+        NewLinePrefix = newLinePrefix;
+    }
+
+    public int Length =&gt; _masterBuilder.Length 
+        + (_segments.Count == 1 &amp;&amp; _segments[0].Item3 ? 0 : _segments.Sum(x =&gt; x.Item1.Length));
+
+    public override string ToString()
+    {
+        // Exclude the prefix content for the next line if there's nothing after it
+        return _masterBuilder + (_segments.Count == 1 &amp;&amp; _segments[0].Item3 
+            ? string.Empty : string.Join(&quot;&quot;, _segments.Select(x =&gt; x.Item1)));
+    }
+
+    public WrappingStringBuilder Append(string value, bool wrapBefore = false)
+    {
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        if (value == string.Empty)
+        {
+            return this;
+        }
+
+        // Check if we need to wrap
+        if (_segments.Count &gt; 0 &amp;&amp; _segments.Sum(x =&gt; x.Item1.Length) + value.Length &gt; _maxLineLength)
+        {
+            // If this isn't a breakpoint, we need to wrap at the previous breakpoint
+            // (if there is one) otherwise, we can just wrap the entire previous line
+            int wrapAt = wrapBefore ? _segments.Count : _segments.FindLastIndex(x =&gt; x.Item2);
+            if (wrapAt &gt; 0)
+            {
+                // Found one, wrap it around
+                _masterBuilder.AppendLine(
+                    string.Join(&quot;&quot;, _segments.Take(wrapAt).Select(x =&gt; x.Item1)));
+                _segments.RemoveRange(0, wrapAt);
+                if (!string.IsNullOrEmpty(NewLinePrefix))
+                {
+                    _segments.Insert(0, Tuple.Create(NewLinePrefix, false, true));
+                }
+            }
+        }
+
+        // Append the new segment
+        _segments.Add(Tuple.Create(value, wrapBefore, false));
+
+        return this;
+    }
+
+    public WrappingStringBuilder AppendLine(string value, bool wrapBefore = false)
+    {
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        // Append this string (and wrap if needed) then wrap again if anything is left
+        Append(value, wrapBefore);
+        if (_segments.Count &gt; 0)
+        {
+            _masterBuilder.AppendLine(
+                string.Join(&quot;&quot;, _segments.Select(x =&gt; x.Item1)));
+            _segments.Clear();
+            if (!string.IsNullOrEmpty(NewLinePrefix))
+            {
+                _segments.Add(Tuple.Create(NewLinePrefix, false, true));
+            }
+        }
+
+        return this;
+    }
+
+    public WrappingStringBuilder AppendLine()
+    {
+        return AppendLine(string.Empty);
+    }
+}
+</code></pre>
+
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+    var disqus_identifier = 'wrappingstringbuilder';
+    var disqus_title = 'WrappingStringBuilder';
+    var disqus_url = 'http://www.daveaglick.com/posts/wrappingstringbuilder';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+
+                                </div>
+                        </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Footer -->
+                <footer>
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+                                        <ul class="list-inline text-center">
+                                                <li>
+                                                <a href="https://twitter.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                                <li>
+                                                <a href="https://github.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                        </ul>
+                                        <p class="copyright text-muted">
+                                                Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
+                                                <br />
+                                                <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
+                                                <br />
+                                                <a href="https://github.com/daveaglick/daveaglick"><i class="fa fa-github"></i> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                                        </p>
+                                        </div>
+                                </div>
+                        </div>
+                </footer> 
+        
+                <script type="text/javascript">
+                        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                        var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+                
+                        /* * * DON'T EDIT BELOW THIS LINE * * */
+                        (function () {
+                                var s = document.createElement('script'); s.async = true;
+                                s.type = 'text/javascript';
+                                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                        }());
+                
+                        // Google Analytics
+                        (function (i, s, o, g, r, a, m) {
+                                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                                (i[r].q = i[r].q || []).push(arguments)
+                                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                
+                        ga('create', 'UA-54470483-1', 'auto');
+                        ga('send', 'pageview');
+                
+                        // Background                        
+                        var colors = Please.make_color({
+                                colors_returned: 3,
+                                saturation: .6
+                        });
+                        var t = new Trianglify({
+                                x_gradient: colors,
+                                y_gradient: ["#FFFFFF"]
+                        });
+                        var header = document.getElementById("intro-header");
+                        var pattern = t.generate(header.clientWidth, header.clientHeight);
+                        header.setAttribute('style', 'background-image: ' + pattern.dataUrl);                        
+                </script>
+        </body>
+</html>
+

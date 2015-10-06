@@ -1,0 +1,303 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Automatically Generating Column Titles For A KendoUI MVC Grid</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/clean-blog.css" rel="stylesheet" />
+        <link href="/Content/master.css" rel="stylesheet" />
+        <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Automatically Generating Column Titles For A KendoUI MVC Grid" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/automatically-generating-column-titles-for-a-kendoui-mvc-grid" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="/Scripts/clean-blog.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        </script>
+            
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+                <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+                <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    
+	</head>
+	<body onload="prettyPrint()">
+                
+                <!-- Navigation -->
+                <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+                        <div class="container-fluid">
+                                <!-- Brand and toggle get grouped for better mobile display -->
+                                <div class="navbar-header page-scroll">
+                                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                                        <span class="sr-only">Toggle navigation</span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        </button>
+                                        <a class="navbar-brand" href="/">Dave Glick</a>
+                                </div>
+                        
+                                <!-- Collect the nav links, forms, and other content for toggling -->
+                                <div class="collapse navbar-collapse" id="navbar-collapse">
+                                        <ul class="nav navbar-nav navbar-right">
+                                                <li><a href="http://wyam.io/">Wyam</a></li>
+                                                <li><a href="http://fluentbootstrap.com/">FluentBootstrap</a></li>
+                                                <li><a class="hidden-xs">|</a><a class="visible-xs-block">-</a></li>
+                                                <li><a href="/about">About</a></li>
+                                                <li><a href="/posts">Archive</a></li>
+                                                <li><a href="/tags">Tags</a></li>
+                                        </ul>
+                                </div>
+                                <!-- /.navbar-collapse -->
+                        </div>
+                        <!-- /.container -->
+                </nav>
+                
+                <!-- Page Header -->
+                <header class="intro-header" id="intro-header">
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+
+    <div class="post-heading">
+        <h1>Automatically Generating Column Titles For A KendoUI MVC Grid</h1>
+        <div class="meta">        
+                Published on Thursday, April 11, 2013<br>
+                    </div>
+            <div class="tags">
+
+<a role="button" href="/tags/asp.net" class="btn btn-default btn-sm"> ASP.NET</a>
+<a role="button" href="/tags/asp.net-mvc" class="btn btn-default btn-sm"> ASP.NET MVC</a>
+<a role="button" href="/tags/data-annotations" class="btn btn-default btn-sm"> data annotations</a>
+<a role="button" href="/tags/grid" class="btn btn-default btn-sm"> grid</a>
+<a role="button" href="/tags/kendoui" class="btn btn-default btn-sm"> KendoUI</a>
+<a role="button" href="/tags/kendoui-mvc" class="btn btn-default btn-sm"> KendoUI MVC</a>            </div>     
+    </div>
+                                        </div>
+                                </div>
+                        </div>
+                </header>
+                
+                <!-- Main Content -->
+                <div class="container">
+                        <div class="row">
+                                <div class="col-md-12">
+                                        
+
+
+
+
+<p>I love KendoUI, especially because of the available MVC wrappers. It is a very well engineered product with lots of opportunity for extension, and in this post I'll briefly discuss one that should relieve a small pain point: generating grid column titles from a <code><a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.dataannotations.displayattribute.aspx">DisplayAttribute</a></code> <a href="http://msdn.microsoft.com/en-us/library/dd901590(v=vs.95).aspx">data annotation</a>. As you probably already know, you can change the way your UI layer presents properties of your model by applying the <code>DisplayAttribute</code> data annotation. This causes most of the UI code to use the <code>Name</code> property of the attribute when displaying that property. It looks like this:</p>
+
+<pre class="prettyprint">[Display(Name = "The Product!")]
+public string ProductName { get; set; }</pre>
+
+<p>Until recently, KendoUI would not recognize the <code>DisplayAttribute</code> applied to a bound column. However, before I go much further, it's worth noting that this is no longer the case. I waited too long to post this article and KendoUI already gets the column title from a <code>DisplayAttribute</code> data annotation if there is one. I am posting this anyway because the technique could be generalized to other ways of customizing the grid by using an extension method.</p>
+
+<p>Now, let's say we have a KendoUI grid declared in Razor using the MVC wrappers (this is from their demo page):</p>
+
+<pre class="prettyprint">@model IEnumerable&lt;Kendo.Mvc.Examples.Models.ProductViewModel&gt;
+
+@(Html.Kendo().Grid(Model)    
+    .Name("Grid")
+    .Columns(columns =&gt;
+    {
+        columns.Bound(p =&gt; p.ProductID);
+        columns.Bound(p =&gt; p.ProductName);
+    })
+    .DataSource(dataSource =&gt; dataSource
+        .Ajax().Read(read =&gt; read.Action("Products_Read", "Grid"))
+    )
+)</pre>
+
+<p>When displaying the column titles, KendoUI will use the name of the property to generate the name of the column. In the example above, you will get two columns named "Product ID" and "Product Name" (Kendo is smart enough to add the spaces in between the capital letters). But what if we wanted our second column to be named "The Product!" as in the example application of <code>DisplayAttribute</code> above? We could add the title explicitly using the <code>Title()</code> extension method:</p>
+
+<pre class="prettyprint">...
+columns.Bound(p =&gt; p.ProductName).Title("The Product!");
+...</pre>
+
+<p>But this violates the <a href="http://en.wikipedia.org/wiki/Don't_repeat_yourself">DRY principle</a>. If you want to change the title in the future, you'll need to remember to change it in both places. What would be better is if we could write something like:</p>
+
+<pre class="prettyprint">...
+columns.Bound(p =&gt; p.ProductName).DisplayNameTitle();
+...</pre>
+
+<p>This would indicate to the grid that the title should be set by getting a <code>DisplayAttribute</code> <code>Name</code> property (if there is one) and using the normal name generation otherwise. The code for such an extension method is below:</p>
+
+<pre class="prettyprint">public static GridBoundColumnBuilder&lt;TModel&gt; DisplayNameTitle&lt;TModel&gt;(
+    this GridBoundColumnBuilder&lt;TModel&gt; builder) where TModel : class, new()
+{
+    // Create an adapter to access the typed grid column
+    // (which contains the Expression)
+    Type adapterType = typeof(GridBoundColumnAdapter&lt;,&gt;)
+        .MakeGenericType(typeof(TModel), builder.Column.MemberType);
+    IGridBoundColumnAdapter adapter =
+        (IGridBoundColumnAdapter)Activator.CreateInstance(adapterType);
+
+    // Use the adapter to get the title and set it
+    return builder.Title(adapter.GetDisplayName(builder.Column));
+}
+
+private interface IGridBoundColumnAdapter
+{
+    string GetDisplayName(IGridBoundColumn column);
+}
+
+private class GridBoundColumnAdapter&lt;TModel, TValue&gt;
+    : IGridBoundColumnAdapter where TModel : class, new()
+{
+    public string GetDisplayName(IGridBoundColumn column)
+    {
+        // Get the typed bound column
+        GridBoundColumn&lt;TModel, TValue&gt; boundColumn =
+            column as GridBoundColumn&lt;TModel, TValue&gt;;
+        if (boundColumn == null) return String.Empty;
+
+        // Create the appropriate HtmlHelper and use it to get the display name
+        HtmlHelper&lt;TModel&gt; helper = HtmlHelpers.For&lt;TModel&gt;(
+            boundColumn.Grid.ViewContext,
+            boundColumn.Grid.ViewData,
+            new RouteCollection());
+        return helper.DisplayNameFor(boundColumn.Expression).ToString();
+    }
+}</pre>
+
+<p>So let's look at this code a little more closely. The first <code>DisplayNameTitle&lt;TModel&gt;()</code> method is the actual extension. It takes a <code>GridBoundColumnBuilder&lt;TModel&gt;</code> because that's what the <code>Bound()</code> method returns as part of the KendoUI MVC fluent interface for column specifications. The <code>DisplayNameTitle</code> extension method creates an instance of an adapter class that can be used to manipulate the grid column. Because the KendoUI MVC classes are strongly typed, we need to use reflection to create an adapter with the proper generic type parameters. The key to this working is that the adapter class implements the non-generic <code>IGridBoundColumnAdapter</code> interface, which means that by casting the reflection-generated generic adapter class to the interface we can call non-generic methods that have access to the generic type parameters we used during the reflected construction in the actual implementation of the method.</p>
+
+<p>The real work gets done inside the <code>GetDisplayName()</code> implementation. This method <a href="/posts/getting-an-htmlhelper-for-an-alternate-model-type">creates an appropriately typed HtmlHelper</a> and then uses it to call the <code>HtmlHelper.DisplayNameFor()</code> extension method. This ensures that our own <code>DisplayNameTitle()</code> extension will always return the exact same title that would be returned if we used the normal MVC <code>HtmlHelper</code> methods to display the property.</p>
+
+<p>This technique could be used to add other extensions to the KendoUI column building fluent interface as well. For example, you could automatically make a column sortable or not based on the data type.</p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+    var disqus_identifier = 'automatically-generating-column-titles-for-a-kendoui-mvc-grid';
+    var disqus_title = 'Automatically Generating Column Titles For A KendoUI MVC Grid';
+    var disqus_url = 'http://www.daveaglick.com/posts/automatically-generating-column-titles-for-a-kendoui-mvc-grid';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+
+                                </div>
+                        </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Footer -->
+                <footer>
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+                                        <ul class="list-inline text-center">
+                                                <li>
+                                                <a href="https://twitter.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                                <li>
+                                                <a href="https://github.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                        </ul>
+                                        <p class="copyright text-muted">
+                                                Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
+                                                <br />
+                                                <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
+                                                <br />
+                                                <a href="https://github.com/daveaglick/daveaglick"><i class="fa fa-github"></i> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                                        </p>
+                                        </div>
+                                </div>
+                        </div>
+                </footer> 
+        
+                <script type="text/javascript">
+                        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                        var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+                
+                        /* * * DON'T EDIT BELOW THIS LINE * * */
+                        (function () {
+                                var s = document.createElement('script'); s.async = true;
+                                s.type = 'text/javascript';
+                                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                        }());
+                
+                        // Google Analytics
+                        (function (i, s, o, g, r, a, m) {
+                                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                                (i[r].q = i[r].q || []).push(arguments)
+                                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                
+                        ga('create', 'UA-54470483-1', 'auto');
+                        ga('send', 'pageview');
+                
+                        // Background                        
+                        var colors = Please.make_color({
+                                colors_returned: 3,
+                                saturation: .6
+                        });
+                        var t = new Trianglify({
+                                x_gradient: colors,
+                                y_gradient: ["#FFFFFF"]
+                        });
+                        var header = document.getElementById("intro-header");
+                        var pattern = t.generate(header.clientWidth, header.clientHeight);
+                        header.setAttribute('style', 'background-image: ' + pattern.dataUrl);                        
+                </script>
+        </body>
+</html>
+

@@ -1,0 +1,245 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+	<title>Dave Glick - Announcing Wyam</title>
+        <meta name="description" content="The personal blog of Dave Glick" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">        
+
+        <link type="application/rss+xml" rel="alternate" title="Dave Glick" href="/feed.rss" />
+        <link type="application/atom+xml" rel="alternate" title="Dave Glick" href="/feed.atom" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+
+        <link href="/Content/bootstrap/bootstrap.css" rel="stylesheet" />
+        <link href="/Content/prettify.css" rel="stylesheet">
+        <link href="/Content/github.css" rel="stylesheet">
+        <link href="/Content/clean-blog.css" rel="stylesheet" />
+        <link href="/Content/master.css" rel="stylesheet" />
+        <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+
+        <meta name="application-name" content="Dave Glick" />
+        <meta name="msapplication-tooltip" content="Dave Glick" />
+        <meta name="msapplication-starturl" content="/" />
+
+        <meta property="og:title" content="Dave Glick - Announcing Wyam" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://daveaglick.com/posts/announcing-wyam" />
+        <!-- TODO: More social graph meta tags -->
+
+        <script src="/Scripts/jquery-2.1.1.min.js"></script>
+        <script src="/Scripts/bootstrap.min.js"></script>     
+        <script src="/Scripts/prettify.js"></script>
+        <script src="/Scripts/clean-blog.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="/Scripts/trianglify.min.js"></script>
+        <script src="/Scripts/Please-compressed.js"></script>
+        </script>
+            
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+                <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+                <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    
+	</head>
+	<body onload="prettyPrint()">
+                
+                <!-- Navigation -->
+                <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+                        <div class="container-fluid">
+                                <!-- Brand and toggle get grouped for better mobile display -->
+                                <div class="navbar-header page-scroll">
+                                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                                        <span class="sr-only">Toggle navigation</span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        </button>
+                                        <a class="navbar-brand" href="/">Dave Glick</a>
+                                </div>
+                        
+                                <!-- Collect the nav links, forms, and other content for toggling -->
+                                <div class="collapse navbar-collapse" id="navbar-collapse">
+                                        <ul class="nav navbar-nav navbar-right">
+                                                <li><a href="http://wyam.io/">Wyam</a></li>
+                                                <li><a href="http://fluentbootstrap.com/">FluentBootstrap</a></li>
+                                                <li><a class="hidden-xs">|</a><a class="visible-xs-block">-</a></li>
+                                                <li><a href="/about">About</a></li>
+                                                <li><a href="/posts">Archive</a></li>
+                                                <li><a href="/tags">Tags</a></li>
+                                        </ul>
+                                </div>
+                                <!-- /.navbar-collapse -->
+                        </div>
+                        <!-- /.container -->
+                </nav>
+                
+                <!-- Page Header -->
+                <header class="intro-header" id="intro-header">
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+
+    <div class="post-heading">
+        <h1>Announcing Wyam</h1>
+            <h2 class="subheading">A modular static content generator built on Roslyn, Razor, and rainbows.</h2>
+        <div class="meta">        
+                Published on Sunday, June 28, 2015<br>
+                    </div>
+            <div class="tags">
+
+<a role="button" href="/tags/net-compiler-platform" class="btn btn-default btn-sm"> .NET Compiler Platform</a>
+<a role="button" href="/tags/open-source" class="btn btn-default btn-sm"> open source</a>
+<a role="button" href="/tags/razor" class="btn btn-default btn-sm"> Razor</a>
+<a role="button" href="/tags/roslyn" class="btn btn-default btn-sm"> Roslyn</a>
+<a role="button" href="/tags/static-site-generator" class="btn btn-default btn-sm"> static site generator</a>
+<a role="button" href="/tags/wyam" class="btn btn-default btn-sm"> Wyam</a>            </div>     
+    </div>
+                                        </div>
+                                </div>
+                        </div>
+                </header>
+                
+                <!-- Main Content -->
+                <div class="container">
+                        <div class="row">
+                                <div class="col-md-12">
+                                        
+
+
+
+<p>I am very proud to announce my newest project, <a href="http://wyam.io">Wyam</a>. It's a static site and content generator built from the ground up to be modular and flexible.</p>
+<p>Here's the thing: I like static site generators. I've been thinking about this problem for a long time (as in, many years). In fact, I did a roundup of <a href="/posts/a-survey-of-dotnet-static-site-generators">.NET static site generators</a> not too long ago. And while there are <em>a lot</em> of generators out there, none of them really fit with the way I think about the problem. I don't want to follow a prescribed notion of what sort of content I'm creating or follow assumptions about the location of files. I wanted a static <em>content</em> generator that is designed from the ground up to be flexible, even if it means making it slightly more complicated to configure. There are some generators that come close (I'm personally fond of the concepts in <a href="http://www.metalsmith.io/">Metalsmith</a>). I'm also a .NET developer and while there are a couple good static site generators in the .NET ecosystem (<a href="https://github.com/Code52/pretzel">Pretzel</a> and <a href="https://github.com/Sandra/Sandra.Snow">Sandra.Snow</a> come to mind), I certainly don't think we've hit peak generator in that world as we have in, say, JavaScript.</p>
+<p>More to the point, I'm a developer. You're (probably) a developer. Why do most static site generators ignore that the people most likely to use them are developers? I'm all for making things easy, but I also want the ability to use my development skills to create the site that <em>I</em> want to create. By making lots of assumptions and abstracting away so much of the process, I get the feeling a lot of the generators out there are try to cater to my mom. Except my mom will never use a static site generator. If I told her to &quot;generate a blog with Jekyll&quot; she'd say &quot;that's nice dear, why don't you talk to your father about that.&quot;</p>
+<p>While I've had ideas about how I would make such a thing for a long time, it wasn't until recently that the tools to realize my vision finally became available. Specifically, maturity of the <a href="https://github.com/dotnet/roslyn">.NET Compiler Platform</a> has finally made it practical to create applications that can compile their own code. This meant that in addition to providing lots of great abstractions and extensibility points to make static content generation <em>easy</em>, I could also provide a mechanism to configre and extend the process for more <em>flexibility</em>.</p>
+<p>Most of that flexibility is evident in the way you configure Wyam. <a href="http://wyam.io/getting-started/configuration">Wyam configuration files</a> are written in C#. You can make extra classes and helper methods. You can create new base pages for the <a href="http://wyam.io/modules/razor">Razor module</a>. You can use delegates to configure modules. Whatever you need it to do, it can do, because you can write the code to do it.</p>
+<p>But don't get me wrong, it also does a lot for you up front. Here's a list of the current features:</p>
+<ul>
+<li>Written in .NET and <a href="http://wyam.io/knowledgebase/writing-a-module">easily extensible</a></li>
+<li><a href="http://wyam.io/getting-started/installation">Low ceremony</a> - download a zip file, unzip, and run</li>
+<li>Flexible <a href="http://wyam.io/getting-started/configuration">script-based configuration</a> using the power of the .NET Compiler Platform (Roslyn)</li>
+<li>Lots of <a href="http://wyam.io/modules">modules</a> for things like <a href="http://wyam.io/modules/readfiles">reading</a> and <a href="http://wyam.io/modules/writefiles">writing</a> files, handling <a href="http://wyam.io/modules/frontmatter">frontmatter</a>, and manipulating <a href="http://wyam.io/modules/metadata">metadata</a></li>
+<li><a href="http://wyam.io/modules/yaml">YAML parser</a></li>
+<li><a href="http://wyam.io/modules/less">Less CSS compiler</a></li>
+<li>Support for multiple templating languages including <a href="http://wyam.io/modules/razor">Razor</a></li>
+<li>Integrated <a href="http://wyam.io/getting-started/usage">web server</a> for previewing output</li>
+<li>Integrated <a href="http://wyam.io/getting-started/usage">file watching</a> and regeneration</li>
+<li>Full <a href="http://wyam.io/getting-started/configuration#nuget">NuGet support</a></li>
+<li><a href="http://wyam.io/knowledgebase/embedded-use">Embeddable engine</a></li>
+</ul>
+<p>In fact, to dogfood Wyam I generated the <a href="http://wyam.io">Wyam.io</a> site with it (meta!). I also refactored this blog to be generated (a post on that coming soon). In the near future, I'll also be adding many more modules including JSON and Liquid (check out the <a href="https://github.com/Wyamio/Wyam/issues">GitHub issues</a> for a look at upcoming features). I'd also like to explore using Wyam for non-site things like generating documentation or eBooks. I would love to attract developers of all backgrounds, but my greatest hope is that Wyam can catch on as a kind of anti-Jekyll for the .NET crowd.</p>
+<p>Oh, and about the name. <em>Wyam</em> is a Native American name for the <a href="https://en.wikipedia.org/wiki/Celilo_Falls">Celilo Falls</a> area and is also roughly translated as &quot;echo of falling water&quot; or &quot;sound of water upon the rocks&quot;. Which sounds kind of like static. For a static site generator. Get it? I also liked the image of water going over the falls as one thing then going through a transition as it emerged at the bottom as something else. Plus the name just sounds cool, and the domain was available. It's also very searchable (looking at you <a href="https://code.visualstudio.com/">Visual Studio Code</a>).</p>
+
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+    var disqus_identifier = 'announcing-wyam';
+    var disqus_title = 'Announcing Wyam';
+    var disqus_url = 'http://www.daveaglick.com/posts/announcing-wyam';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>    
+
+                                </div>
+                        </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Footer -->
+                <footer>
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col-md-12">
+                                        <ul class="list-inline text-center">
+                                                <li>
+                                                <a href="https://twitter.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                                <li>
+                                                <a href="https://github.com/daveaglick">
+                                                        <span class="fa-stack fa-lg">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                                        </span>
+                                                </a>
+                                                </li>
+                                        </ul>
+                                        <p class="copyright text-muted">
+                                                Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
+                                                <br />
+                                                <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
+                                                <br />
+                                                <a href="https://github.com/daveaglick/daveaglick"><i class="fa fa-github"></i> This Site on GitHub</a> | <strong><a href="http://wyam.io">Generated by Wyam</a></strong>
+                                        </p>
+                                        </div>
+                                </div>
+                        </div>
+                </footer> 
+        
+                <script type="text/javascript">
+                        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                        var disqus_shortname = 'somedave'; // required: replace example with your forum shortname
+                
+                        /* * * DON'T EDIT BELOW THIS LINE * * */
+                        (function () {
+                                var s = document.createElement('script'); s.async = true;
+                                s.type = 'text/javascript';
+                                s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                        }());
+                
+                        // Google Analytics
+                        (function (i, s, o, g, r, a, m) {
+                                i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                                (i[r].q = i[r].q || []).push(arguments)
+                                }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                
+                        ga('create', 'UA-54470483-1', 'auto');
+                        ga('send', 'pageview');
+                
+                        // Background                        
+                        var colors = Please.make_color({
+                                colors_returned: 3,
+                                saturation: .6
+                        });
+                        var t = new Trianglify({
+                                x_gradient: colors,
+                                y_gradient: ["#FFFFFF"]
+                        });
+                        var header = document.getElementById("intro-header");
+                        var pattern = t.generate(header.clientWidth, header.clientHeight);
+                        header.setAttribute('style', 'background-image: ' + pattern.dataUrl);                        
+                </script>
+        </body>
+</html>
+
