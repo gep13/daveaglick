@@ -143,7 +143,7 @@ Pipelines.Add(
 );
 </code></pre>
 <p>Once I had the non-blog pages working, I moved on the blog posts. In the previous site each post specified it's metadata (like title, published date, etc.) by setting additional Razor page properties from the custom base class. In this case, I had a better mechanism for specifying metadata and used <a href="http://wyam.io/modules/yaml">YAML</a> <a href="http://wyam.io/modules/frontmatter">front matter</a> for the metadata. This required me to manually change the declarations at the top of each blog post from something like this:</p>
-<pre class="prettyprint"><code>@{
+<pre class="prettyprint"><code>&#64;{
     Title = &quot;Announcing LINQPad.CodeAnalysis&quot;;
     Lead = &quot;.NET Compiler Platform helpers and utilities for LINQPad.&quot;;
     Published = new DateTime(2015, 3, 18);
@@ -163,26 +163,26 @@ Tags:
 </code></pre>
 <p>It's a nice side benefit that the YAML is easier to read as well. This process took about an hour for all my posts.</p>
 <p>The last step was to convert over the more dynamic pages in the site, specifically the <a href="/posts">post archives</a> and <a href="/tags">list of tags</a> and cooresponding tag archives. For the post archive, I wrote a LINQ statement that used the Wyam metadata to fetch all the posts in the site:</p>
-<pre class="prettyprint"><code>@{
+<pre class="prettyprint"><code>&#64;{
   foreach(IGrouping&lt;int, IDocument&gt; year in Documents
     .Where(x =&gt; x.ContainsKey(&quot;Published&quot;))
     .OrderByDescending(x =&gt; x.Get&lt;DateTime&gt;(&quot;Published&quot;))
     .GroupBy(x =&gt; x.Get&lt;DateTime&gt;(&quot;Published&quot;).Year)
     .OrderByDescending(x =&gt; x.Key))
   {
-    &lt;h3&gt;@year.Key&lt;/h3&gt;
+    &lt;h3&gt;&#64;year.Key&lt;/h3&gt;
     // ...
   }
 }
 </code></pre>
 <p>Then for the tags, I did something similar (this uses the special <code>ToLookup</code> extension for handling metadata lookup in Wyam):</p>
-<pre class="prettyprint"><code>@{    
+<pre class="prettyprint"><code>&#64;{    
   var DocumentsByTag = Documents
     .ContainsKey(&quot;Published&quot;)
     .ToLookup&lt;string&gt;(&quot;Tags&quot;);
 }
 // ...
-@{
+&#64;{
   foreach (var tagDocuments in DocumentsByTag.OrderBy(x =&gt; x.Key))
   {
     // ...
@@ -191,7 +191,7 @@ Tags:
 </code></pre>
 <p>Finally, to generate the individual archive page for each tag, I added a special pipeline that outputs a page per tag:</p>
 <pre class="prettyprint"><code>Pipelines.Add(&quot;Tags&quot;,
-  ReadFiles(@&quot;tags\index.cshtml&quot;),
+  ReadFiles(&#64;&quot;tags\index.cshtml&quot;),
   FrontMatter(),
   Execute((doc, ctx) =&gt; ctx.Documents
     .Where(x =&gt; x.ContainsKey(&quot;Published&quot;) &amp;&amp; x.ContainsKey(&quot;Tags&quot;))
@@ -258,7 +258,7 @@ Tags:
                                                 </li>
                                         </ul>
                                         <p class="copyright text-muted">
-                                                Copyright © 2015 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
+                                                Copyright © 2016 by Dave Glick. All jams and jellies preserved. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" rel="license">Creative Commons Attribution 4.0 International License</a>.
                                                 <br />
                                                 <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
                                                 <br />
