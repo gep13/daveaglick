@@ -112,6 +112,15 @@
 
 <div class="row">
  <div class="col-sm-8 right-border">            <div class="post-preview">
+                <a href="/posts/nuget-api-survey">
+                    <h2 class="post-title">NuGet API Survey</h2>
+                        <h3 class="post-subtitle">What projects are using the NuGet API?</h3>
+                </a>
+                <p class="post-meta">Posted on Thursday, January 7, 2016</p>
+                <p>By now, most .NET developers are at least a bit familiar with NuGet, the NuGet command line interface, and the NuGet GUI in Visual Studio. But did you know there's another way to use NuGet? The project has published libraries (on NuGet, how meta!) for a while. You can reference these libraries from your own code to make <em>your</em> application create packages, download them, extract them, etc. In NuGet version 2, most of the surface API was contained in a library called NuGet.Core. However, the move to NuGet version 3 is bringing some big changes including a transition to many smaller and more granular API libraries. I use the NuGet APIs in some of my own projects and I was wondering how many other projects use them and in what ways. There isn't a lot of documentation on the APIs, so looking at other code is one of the best ways to figure out what works and what doesn't. I was also hopeful it might give me some clues to the future of the NuGet APIs and how best to transition to version 3.</p>             
+            </div>       
+                <hr /> 
+            <div class="post-preview">
                 <a href="/posts/2015-in-review">
                     <h2 class="post-title">2015 In Review</h2>
                         <h3 class="post-subtitle">A personal look back (and an important announcement).</h3>
@@ -127,15 +136,6 @@
                 </a>
                 <p class="post-meta">Posted on Tuesday, October 6, 2015</p>
                 <p>I've been working on a Roslyn-powered documentation generator built on top of <a href="http://wyam.io">Wyam</a> for a little while, but recently ran into an area that's taken a lot longer than I thought it would. I've been trying to generate syntax strings that look like the ones on the MSDN site.</p>             
-            </div>       
-                <hr /> 
-            <div class="post-preview">
-                <a href="/posts/announcing-dotnetissues">
-                    <h2 class="post-title">Announcing @dotnetissues</h2>
-                        <h3 class="post-subtitle">A Twitter bot to keep you up to date with important .NET repositories.</h3>
-                </a>
-                <p class="post-meta">Posted on Monday, September 21, 2015</p>
-                <p>As more and more of the .NET framework, runtime, etc. get put in the open on GitHub, the community has the opportunity to participate in the day-to-day evolution of core parts of our platform. However, given the large number of projects (which is great!) and the volume of interaction, it can be hard to keep up. This is especially true because of the all-or-nothing notification model in GitHub. If you watch a repository, you will get notified of every since action including comments, commits, etc. What I wanted was a way to get notified of <em>new</em> issues so that I could keep an eye on things and then elect to subscribe to additional notifications for just the ones that interested me.</p>             
             </div>       
 </div>
  <div class="col-sm-4 sidebar">        <hr class="visible-xs-block" />
@@ -195,10 +195,10 @@
         <h5>Older Posts</h5>
 
   <ul class="list-unstyled">
+   <li><a href="/posts/announcing-dotnetissues">Announcing @dotnetissues</a></li>
    <li><a href="/posts/multiple-string-replacement">Multiple String Replacement</a></li>
    <li><a href="/posts/linqpad-codeanalysis-is-now-part-of-linqpad">LINQPad.CodeAnalysis Is Now Part Of LINQPad</a></li>
    <li><a href="/posts/streaming-linq-based-text-search-and-replace">Streaming LINQ-Based Text Search and Replace</a></li>
-   <li><a href="/posts/easy-performance-and-query-logging-in-aspnet-with-serilog-and-miniprofiler">Easy Performance and Query Logging in ASP.NET with Serilog and MiniProfiler</a></li>
   </ul>        <ul class="pager">
             <li class="next">
                 <a href="/posts">Archive &rarr;</a>
